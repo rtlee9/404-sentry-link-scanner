@@ -181,7 +181,7 @@ def check_all_links(url):
     url_standardized = standardize_url(url)
     print('Checking all links found in {}'.format(url_standardized))
     links = get_all_links(url_standardized)
-    link_tree[url_standardized] = [link for link in links if not is_internal_link(link, url_standardized)]
+    link_tree[url_standardized] = [standardize_url(link) for link in links if not is_internal_link(link, url_standardized)]
     internal_links, external_links = group_links_internal_external(links, url_standardized)
 
     # check links and return internal links for following
