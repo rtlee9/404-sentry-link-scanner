@@ -213,15 +213,15 @@ def reset_inits():
     links_checked_and_followed = set()
 
 
-def report_errors(url):
+def report_errors(url, matcher):
     # check all links
     reset_inits()
     check_all_links_and_follow(url)
 
     # report errors
     for link in links_checked.values():
-        status = link.get('response_status')
-        if status != 200:
+        status = link.get('response_status', -1)
+        if matcher(status):
             print(status, link['url'])
 
 
@@ -232,4 +232,4 @@ if __name__ == '__main__':
         '-r', '--root-url', help='Root URL', required=True)
     args = parser.parse_args()
 
-    report_errors(args.root_url)
+    report_errors(args.root_url, lambda status: status != 200)
