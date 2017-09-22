@@ -5,9 +5,6 @@ import argparse
 
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95'}
-link_tree = {}
-links_checked_and_followed = set()
-links_checked = {}
 
 
 def get_all_links(url):
@@ -135,32 +132,6 @@ def test_is_flat_file():
     assert(not is_flat_file('http://www.informit.com/articles/article.aspx?p=2314818'))
 
 
-def check_link(link):
-    link_standardized = standardize_url(link)
-    check_status = dict(
-        url_raw=link,
-        url=link_standardized,
-    )
-    if link_standardized in links_checked:
-        return
-    elif is_flat_file(link):
-        check_status['note'] = 'Flat file not checked'
-    else:
-        try:
-            response = get(link_standardized)
-            check_status['response_status'] = response.status_code
-            check_status['response_text'] = response.text
-        except Exception as e:
-            check_status['note'] = e
-    links_checked[link_standardized] = check_status
-    return check_status
-
-
-def check_links(links):
-    for link in links:
-        check_link(link)
-
-
 def standardize_url(url):
     url = url.strip().split('#')[0].split('?')[0]
     if url.endswith('/'):
@@ -177,52 +148,73 @@ def test_standardize_url():
     assert(standardize_url('http://eightportions.com ') == 'http://eightportions.com')
 
 
-def check_all_links(url):
-    url_standardized = standardize_url(url)
-    print('Checking all links found in {}'.format(url_standardized))
-    links = get_all_links(url_standardized)
-    link_tree[url_standardized] = [standardize_url(link) for link in links if not is_internal_link(link, url_standardized)]
-    internal_links, external_links = group_links_internal_external(links, url_standardized)
+class LinkChecker(object):
+    def __init__(self, url):
+        self.link_tree = {}
+        self.links_checked_and_followed = set()
+        self.links_checked = {}
+        self.url = url
 
-    # check links and return internal links for following
-    check_links(internal_links)
-    check_links(external_links)
-    return internal_links
+    def check_link(self, link):
+        link_standardized = standardize_url(link)
+        check_status = dict(
+            url_raw=link,
+            url=link_standardized,
+        )
+        if link_standardized in self.links_checked:
+            return
+        elif is_flat_file(link):
+            check_status['note'] = 'Flat file not checked'
+        else:
+            try:
+                response = get(link_standardized)
+                check_status['response_status'] = response.status_code
+                check_status['response_text'] = response.text
+            except Exception as e:
+                check_status['note'] = e
+        self.links_checked[link_standardized] = check_status
+        return check_status
 
+    def check_links(self, links):
+        for link in links:
+            self.check_link(link)
 
-def check_all_links_and_follow(url):
-    url_standardized = standardize_url(url)
-    if url_standardized in links_checked_and_followed:
-        return
-    links_checked_and_followed.add(url_standardized)
-    internal_links = check_all_links(url_standardized)
-    for internal_link in internal_links:
-        check_all_links_and_follow(internal_link)
+    def check_all_links(self, url):
+        url_standardized = standardize_url(url)
+        print('Checking all links found in {}'.format(url_standardized))
+        links = get_all_links(url_standardized)
+        self.link_tree[url_standardized] = [standardize_url(link) for link in links if not is_internal_link(link, url_standardized)]
+        internal_links, external_links = group_links_internal_external(links, url_standardized)
+
+        # check links and return internal links for following
+        self.check_links(internal_links)
+        self.check_links(external_links)
+        return internal_links
+
+    def check_all_links_and_follow(self, url=None):
+        if url is None:
+            url = self.url
+        url_standardized = standardize_url(url)
+        if url_standardized in self.links_checked_and_followed:
+            return
+        self.links_checked_and_followed.add(url_standardized)
+        internal_links = self.check_all_links(url)
+        for internal_link in internal_links:
+            self.check_all_links_and_follow(internal_link)
+
+    def report_errors(self, matcher):
+        # report errors
+        for link in self.links_checked.values():
+            status = link.get('response_status', -1)
+            if matcher(status):
+                print(status, link['url'])
 
 
 def test_links_checked_and_followed():
-    reset_inits()
-    check_all_links_and_follow(' https://eightportions.com/img/Taxi_pick_by_drop.gif')
-    assert(links_checked == {})
-    assert(check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip')['note'] == 'Flat file not checked')
-
-
-def reset_inits():
-    links_checked = {}
-    link_tree = {}
-    links_checked_and_followed = set()
-
-
-def report_errors(url, matcher):
-    # check all links
-    reset_inits()
-    check_all_links_and_follow(url)
-
-    # report errors
-    for link in links_checked.values():
-        status = link.get('response_status', -1)
-        if matcher(status):
-            print(status, link['url'])
+    checker = LinkChecker(' https://eightportions.com/img/Taxi_pick_by_drop.gif')
+    checker.check_all_links_and_follow()
+    assert(checker.links_checked == {})
+    assert(checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip')['note'] == 'Flat file not checked')
 
 
 if __name__ == '__main__':
@@ -232,4 +224,6 @@ if __name__ == '__main__':
         '-r', '--root-url', help='Root URL', required=True)
     args = parser.parse_args()
 
-    report_errors(args.root_url, lambda status: status != 200)
+    checker = LinkChecker(args.root_url)
+    checker.check_all_links_and_follow()
+    checker.report_errors(lambda status: status != 200)
