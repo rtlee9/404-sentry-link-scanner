@@ -12,7 +12,9 @@ def get_all_links(url):
         return []
     html = get(url).content
     soup = BeautifulSoup(html, 'lxml')
-    return [a['href'] for a in soup.find_all('a') if a.has_attr('href')]
+    return [
+        standardize_url(a['href']) for a in soup.find_all('a')
+        if a.has_attr('href')]
 
 
 def test_get_all_links_len_8P():
