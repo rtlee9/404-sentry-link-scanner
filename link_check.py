@@ -202,12 +202,19 @@ class LinkChecker(object):
         for internal_link in internal_links:
             self.check_all_links_and_follow(internal_link)
 
+    def get_errors(self, matcher):
+        return [link['url'] for link in self.links_checked.values()
+                if matcher(link.get('response_status', -1))]
+
     def report_errors(self, matcher):
-        # report errors
-        for link in self.links_checked.values():
-            status = link.get('response_status', -1)
-            if matcher(status):
-                print(status, link['url'])
+        errors = self.get_errors(matcher)
+        error_sources = {error: [] for error in errors}
+        for error in errors:
+            for k, v in self.link_tree.items():
+                if error in v:
+                    error_sources[error].append(k)
+        print(error_sources)
+        return error_sources
 
 
 def test_links_checked_and_followed():
