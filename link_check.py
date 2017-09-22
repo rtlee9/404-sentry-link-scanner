@@ -233,4 +233,4 @@ if __name__ == '__main__':
 
     checker = LinkChecker(args.root_url)
     checker.check_all_links_and_follow()
-    checker.report_errors(lambda status: status != 200)
+    checker.report_errors(lambda status: status == 404)
