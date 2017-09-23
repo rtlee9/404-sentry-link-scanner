@@ -158,7 +158,7 @@ class LinkChecker(object):
         self.link_tree = {}
         self.links_checked_and_followed = set()
         self.links_checked = {}
-        self.url = url
+        self.url = standardize_url(url)
 
     def check_link(self, link):
         link_standardized = standardize_url(link)
