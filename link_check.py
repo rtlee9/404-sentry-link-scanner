@@ -16,10 +16,6 @@ def get_all_links(url):
         if a.has_attr('href')]
 
 
-def test_get_all_links_len_8P():
-    assert len(get_all_links('http://eightportions.com')) > 15
-
-
 def get_base_url(url):
     """Strip the scheme and trailing slashes from the URL"""
     url_root = '//'.join(url.split('//')[1:])
@@ -27,26 +23,11 @@ def get_base_url(url):
     return url_stripped
 
 
-def test_get_base_url():
-    assert get_base_url('https://eightportions.com') == 'eightportions.com'
-    assert get_base_url('http://eightportions.com') == 'eightportions.com'
-    assert get_base_url('http://eightportions.com/') == 'eightportions.com'
-    assert get_base_url('https://eightp//ortions.com') == 'eightp//ortions.com'
-
-
 def get_hostname(url):
     """strip the path and query string from the url"""
     url_root = '/'.join(url.split('/')[:3])
     url_stripped = url_root[:-1] if url_root.endswith('/') else url_root
     return url_stripped
-
-
-def test_get_hostname():
-    assert get_hostname('https://eightportions.com') == 'https://eightportions.com'
-    assert get_hostname('http://eightportions.com') == 'http://eightportions.com'
-    assert get_hostname('http://eightportions.com/') == 'http://eightportions.com'
-    assert get_hostname('http://eightportions.com/asdf') == 'http://eightportions.com'
-    assert get_hostname('http://eightportions.com/asdf/dsf1') == 'http://eightportions.com'
 
 
 def points_to_self(link, url_self):
@@ -58,14 +39,6 @@ def points_to_self(link, url_self):
     return False
 
 
-def test_points_to_self():
-    assert points_to_self('/', 'asdf')
-    assert points_to_self('https://eightportions.com', 'https://eightportions.com')
-    assert points_to_self('http://eightportions.com', 'https://eightportions.com')
-    assert points_to_self('http://eightpor//tions.com', 'https://eightpor//tions.com')
-    assert ~points_to_self('http://eightport//ions.com', 'https://eightpor//tions.com')
-
-
 def is_internal_link(link, reference_url):
     """Return true IFF `link` is a sub-component of `reference_url`"""
     if link.startswith('/') or link.startswith('#'):
@@ -75,26 +48,11 @@ def is_internal_link(link, reference_url):
     return False
 
 
-def test_internal_link():
-    assert is_internal_link('/', 'https://eightportions.com')
-    assert is_internal_link('/', 'asdfa')
-    assert is_internal_link('https://eightportions.com', 'https://eightportions.com')
-    assert ~is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
-
-
 def prepend_if_relative(link, url):
     """Standardize `link` by prepending it with the hostname if relative"""
     if link.startswith('/') or link.startswith('#'):
         return get_hostname(url) + link
     return link
-
-
-def test_prepend_if_relative():
-    assert prepend_if_relative('/', 'https://eightportions.com') == 'https://eightportions.com/'
-    assert prepend_if_relative('/page', 'https://eightportions.com') == 'https://eightportions.com/page'
-    assert prepend_if_relative('/page', 'http://eightportions.com') == 'http://eightportions.com/page'
-    assert prepend_if_relative('/page1/subpage1', 'http://eightportions.com') == 'http://eightportions.com/page1/subpage1'
-    assert prepend_if_relative('http://eightportions.com', 'http://eightportions.com') == 'http://eightportions.com'
 
 
 def group_links_internal_external(links, url):
@@ -131,16 +89,6 @@ def is_flat_file(url):
     return True
 
 
-def test_is_flat_file():
-    assert not is_flat_file('http://eightportions.com')
-    assert not is_flat_file('https://eightportions.com')
-    assert not is_flat_file('https://eightportions.zip')
-    assert is_flat_file('https://eightportions/test.zip')
-    assert is_flat_file('https://eightportions/test.json')
-    assert not is_flat_file('https://www.tensorflow.org/versions/r0.11/tutorials/wide_and_deep/index.html#tensorflow-wide-deep-learning-tutorial')
-    assert not is_flat_file('http://www.informit.com/articles/article.aspx?p=2314818')
-
-
 def standardize_url(url):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
@@ -151,16 +99,6 @@ def standardize_url(url):
     if not url.startswith('http') and not url.startswith('/'):
         url = 'http://' + url
     return url
-
-
-def test_standardize_url():
-    assert standardize_url('https://eightportions.com ') == 'https://eightportions.com'
-    assert standardize_url('https://eightportions.com') == 'https://eightportions.com'
-    assert standardize_url('https://eightportions.com/ ') == 'https://eightportions.com'
-    assert standardize_url('https://eightportions.com/') == 'https://eightportions.com'
-    assert standardize_url('http://eightportions.com') == 'http://eightportions.com'
-    assert standardize_url('http://eightportions.com ') == 'http://eightportions.com'
-    assert standardize_url('eightportions.com ') == 'http://eightportions.com'
 
 
 class LinkChecker(object):
@@ -238,13 +176,6 @@ class LinkChecker(object):
                     error_sources[error].append(key)
         print(error_sources)
         return error_sources
-
-
-def test_links_checked_and_followed():
-    test_checker = LinkChecker(' https://eightportions.com/img/Taxi_pick_by_drop.gif')
-    test_checker.check_all_links_and_follow()
-    assert test_checker.links_checked == {}
-    assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip')['note'] == 'Flat file not checked'
 
 
 if __name__ == '__main__':
