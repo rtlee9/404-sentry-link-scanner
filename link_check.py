@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from requests import get, ConnectionError
 from requests.sessions import InvalidSchema
 import argparse
+from globals import GET_TIMEOUT
 
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95'}
@@ -172,7 +173,7 @@ class LinkChecker(object):
             check_status['note'] = 'Flat file not checked'
         else:
             try:
-                response = get(link_standardized)
+                response = requests.get(link_standardized, timeout=GET_TIMEOUT)
                 check_status['response_status'] = response.status_code
                 check_status['response_text'] = response.text
             except Exception as e:
