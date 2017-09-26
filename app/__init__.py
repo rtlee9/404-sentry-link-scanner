@@ -4,5 +4,6 @@ from .links import Link
 
 
 app = Flask(__name__)
+app.config.from_object('config.Config')
 api = Api(app)
 api.add_resource(Link, "/link")
