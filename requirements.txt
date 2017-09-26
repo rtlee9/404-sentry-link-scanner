@@ -3,3 +3,4 @@ Flask_RESTful==0.3.6
 requests==2.13.0
 beautifulsoup4==4.6.0
 pytest==3.0.5
+lxml==4.0.0
