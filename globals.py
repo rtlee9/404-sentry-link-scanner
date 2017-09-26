@@ -1,1 +1,2 @@
-GET_TIMEOUT=1
+"""Set global statics"""
+GET_TIMEOUT = 1
