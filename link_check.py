@@ -1,9 +1,7 @@
 from bs4 import BeautifulSoup
-from requests import get, ConnectionError
-from requests.sessions import InvalidSchema
+import requests
 import argparse
 from globals import GET_TIMEOUT
-
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95'}
 
@@ -11,7 +9,7 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 def get_all_links(url):
     if is_flat_file(url):
         return []
-    html = get(url).content
+    html = requests.get(url).content
     soup = BeautifulSoup(html, 'lxml')
     return [
         standardize_url(a['href']) for a in soup.find_all('a')
