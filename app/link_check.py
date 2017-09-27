@@ -3,7 +3,8 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 from .globals import GET_TIMEOUT
-
+from . import db
+from .models import LinkCheck
 
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
@@ -108,29 +109,53 @@ class LinkChecker(object):
     def __init__(self, url):
         self.link_tree = {}
         self.links_checked_and_followed = set()
-        self.links_checked = {}
+        self.links_checked = []
         self.url = standardize_url(url)
 
     def check_link(self, link):
         """Request the resources specified by `link` and persist the results"""
         link_standardized = standardize_url(link)
-        check_status = dict(
+        url_dict = dict(
             url_raw=link,
             url=link_standardized,
         )
         if link_standardized in self.links_checked:
             return
         elif is_flat_file(link):
-            check_status['note'] = 'Flat file not checked'
+            linkcheck_record = LinkCheck(
+                **url_dict,
+                note='Flat file not checked'
+            )
         else:
             try:
                 response = requests.get(link_standardized, timeout=GET_TIMEOUT)
-                check_status['response_status'] = response.status_code
-                check_status['response_text'] = response.text
+                note = None
+                linkcheck_record = LinkCheck(
+                    **url_dict,
+                    response=response.status_code,
+                    text=response.text,
+                )
             except Exception as exception:
-                check_status['note'] = exception
-        self.links_checked[link_standardized] = check_status
-        return check_status
+                linkcheck_record = LinkCheck(
+                    **url_dict,
+                    note=str(exception),
+                )
+
+        db.session.add(linkcheck_record)
+        try:
+            db.session.commit()
+        except Exception as exception:
+            # response text contains invalid string literals
+            db.session.rollback()
+            db.session.add(LinkCheck(
+                **url_dict,
+                response=response.status_code,
+                note=str(exception)))
+            db.session.commit()
+
+        self.links_checked.append(link_standardized)
+        return linkcheck_record
+
 
     def check_links(self, links):
         """Check each link in array `links`"""
@@ -165,17 +190,18 @@ class LinkChecker(object):
     def get_errors(self, matcher):
         """Return a formatted JSON document describing any errors
         matching function `matcher`"""
-        return [link['url'] for link in self.links_checked.values()
-                if matcher(link.get('response_status', -1))]
+        return LinkCheck.query.\
+            filter(LinkCheck.job == self.job).\
+            filter(matcher(LinkCheck.response)).all()
 
     def report_errors(self, matcher):
         """Print any errors matching function `matcher`"""
         errors = self.get_errors(matcher)
-        error_sources = {error: [] for error in errors}
+        error_sources = {error.url: [] for error in errors}
         for error in errors:
             for key, value in self.link_tree.items():
-                if error in value:
-                    error_sources[error].append(key)
+                if error.url in value:
+                    error_sources[error.url].append(key)
         print(error_sources)
         return error_sources
 
