@@ -1,6 +1,6 @@
 from flask_restful import Resource, reqparse
 from requests import get
-from link_check import LinkChecker
+from .link_check import LinkChecker
 
 
 class Link(Resource):

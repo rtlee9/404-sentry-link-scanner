@@ -2,7 +2,7 @@
 import argparse
 import requests
 from bs4 import BeautifulSoup
-from globals import GET_TIMEOUT
+from .globals import GET_TIMEOUT
 
 
 def get_all_links(url):

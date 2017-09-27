@@ -1,4 +1,4 @@
-from link_check import *
+from app.link_check import *
 
 def test_get_all_links_len_8P():
     assert len(get_all_links('http://eightportions.com')) > 15
