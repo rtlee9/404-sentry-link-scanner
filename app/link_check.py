@@ -2,9 +2,10 @@
 import argparse
 import requests
 from bs4 import BeautifulSoup
+import datetime
 from .globals import GET_TIMEOUT
 from . import db
-from .models import LinkCheck
+from .models import LinkCheck, ScanJob
 
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
@@ -111,19 +112,23 @@ class LinkChecker(object):
         self.links_checked_and_followed = set()
         self.links_checked = []
         self.url = standardize_url(url)
+        self.job = ScanJob(root_url=self.url, start_time=datetime.datetime.utcnow())
+        db.session.add(self.job)
+        db.session.commit()
 
     def check_link(self, link):
         """Request the resources specified by `link` and persist the results"""
         link_standardized = standardize_url(link)
-        url_dict = dict(
+        link_record_base = dict(
             url_raw=link,
             url=link_standardized,
+            job=self.job,
         )
         if link_standardized in self.links_checked:
             return
         elif is_flat_file(link):
             linkcheck_record = LinkCheck(
-                **url_dict,
+                **link_record_base,
                 note='Flat file not checked'
             )
         else:
@@ -131,13 +136,13 @@ class LinkChecker(object):
                 response = requests.get(link_standardized, timeout=GET_TIMEOUT)
                 note = None
                 linkcheck_record = LinkCheck(
-                    **url_dict,
+                    **link_record_base,
                     response=response.status_code,
                     text=response.text,
                 )
             except Exception as exception:
                 linkcheck_record = LinkCheck(
-                    **url_dict,
+                    **link_record_base,
                     note=str(exception),
                 )
 
@@ -148,7 +153,7 @@ class LinkChecker(object):
             # response text contains invalid string literals
             db.session.rollback()
             db.session.add(LinkCheck(
-                **url_dict,
+                **link_record_base,
                 response=response.status_code,
                 note=str(exception)))
             db.session.commit()
@@ -167,7 +172,9 @@ class LinkChecker(object):
         url_standardized = standardize_url(url)
         print('Checking all links found in {}'.format(url_standardized))
         links = get_all_links(url_standardized)
-        self.link_tree[url_standardized] = [standardize_url(link) for link in links if not is_internal_link(link, url_standardized)]
+        self.link_tree[url_standardized] = [
+            standardize_url(link) for link in links
+            if not is_internal_link(link, url_standardized)]
         internal_links, external_links = group_links_internal_external(links, url_standardized)
 
         # check links and return internal links for following
