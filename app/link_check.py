@@ -234,6 +234,12 @@ def scan_job(root_url):
     checker = LinkChecker(root_url)
     return checker.scan()
 
+
+def repeating_scan_job(url, delay):
+    scanner = scan_job.schedule(args=(url,), delay=delay)
+    scanner(blocking=True)
+    repeating_scan_job(url, delay)
+
 if __name__ == '__main__':
     # read CLI args
     parser = argparse.ArgumentParser(description='Link checker')
