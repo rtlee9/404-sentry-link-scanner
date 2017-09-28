@@ -1,13 +1,14 @@
 from flask_restful import Resource, reqparse
 from requests import get
-from .link_check import LinkChecker
+from .link_check import scan_job
+from . import huey
 
 
 class Link(Resource):
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('delay', type=int, help='delay for job', default=0)
         args = parser.parse_args()
-        checker = LinkChecker(args.url)
-        checker.check_all_links_and_follow()
-        return checker.report_errors(lambda status: status == 404)
+        scanner = scan_job.schedule(args=(args.url,), delay=args.delay)
+        return scanner(blocking=True)

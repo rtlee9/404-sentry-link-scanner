@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from .globals import GET_TIMEOUT
-from . import db
+from . import db, huey
 from .models import Link, LinkCheck, ScanJob
 
 def get_all_links(url):
@@ -194,6 +194,10 @@ class LinkChecker(object):
         for internal_link in internal_links:
             self.check_all_links_and_follow(internal_link)
 
+    def scan(self):
+        self.check_all_links_and_follow(self.url)
+        return self.report_errors(lambda status: status == 404)
+
     def get_errors(self, matcher):
         """Return a formatted JSON document describing any errors
         matching function `matcher`"""
@@ -225,13 +229,15 @@ class LinkChecker(object):
         return error_report
 
 
+@huey.task()
+def scan_job(root_url):
+    checker = LinkChecker(root_url)
+    return checker.scan()
+
 if __name__ == '__main__':
     # read CLI args
     parser = argparse.ArgumentParser(description='Link checker')
     parser.add_argument(
         '-r', '--root-url', help='Root URL', required=True)
     args = parser.parse_args()
-
-    checker = LinkChecker(args.root_url)
-    checker.check_all_links_and_follow()
-    checker.report_errors(lambda status: status == 404)
+    scan(args.root_url)
