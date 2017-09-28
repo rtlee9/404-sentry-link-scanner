@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from .globals import GET_TIMEOUT
-from . import db, huey
+from . import app, db, scheduler
 from .models import Link, LinkCheck, ScanJob
 
 def get_all_links(url):
@@ -194,10 +194,6 @@ class LinkChecker(object):
         for internal_link in internal_links:
             self.check_all_links_and_follow(internal_link)
 
-    def scan(self):
-        self.check_all_links_and_follow(self.url)
-        return self.report_errors(lambda status: status == 404)
-
     def get_errors(self, matcher):
         """Return a formatted JSON document describing any errors
         matching function `matcher`"""
@@ -229,16 +225,26 @@ class LinkChecker(object):
         return error_report
 
 
-@huey.task()
-def scan_job(root_url):
-    checker = LinkChecker(root_url)
-    return checker.scan()
+def scan(root_url):
+    with app.app_context():
+        print('Scanning [{}]'.format(datetime.datetime.now().time()))
+        checker = LinkChecker(root_url)
+        checker.check_all_links_and_follow()
+        checker.report_errors(lambda status: status == 404)
 
 
-def repeating_scan_job(url, delay):
-    scanner = scan_job.schedule(args=(url,), delay=delay)
-    scanner(blocking=True)
-    repeating_scan_job(url, delay)
+def scheduled_scan(url, cron_params):
+    checker = LinkChecker(url)
+    print(checker.job.id)
+    job_params_base = {
+        'id': url,
+        'func': scan,
+        'args': (url, ),
+        'trigger': 'cron',
+    }
+    job_params = {**job_params_base, **cron_params}
+    return scheduler.add_job(**job_params)
+
 
 if __name__ == '__main__':
     # read CLI args

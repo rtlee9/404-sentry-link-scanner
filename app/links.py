@@ -1,15 +1,21 @@
 from flask_restful import Resource, reqparse
+from flask import request
 from requests import get
-from .link_check import repeating_scan_job, scan_job
-from . import huey
+from .link_check import LinkChecker, scheduled_scan
 
 
 class Link(Resource):
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
-        parser.add_argument('delay', type=int, help='delay for job', default=0)
         args = parser.parse_args()
-        scanner = scan_job.schedule(args=(args.url,), delay=0)
-        scanner(blocking=True)
-        repeating_scan_job(args.url, delay=args.delay)
+        checker = LinkChecker(args.url)
+        checker.check_all_links_and_follow()
+        return checker.report_errors(lambda status: status == 404)
+
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', type=str, help='URL to check')
+        args = parser.parse_args()
+        cron_params = request.get_json()
+        scheduled_scan(args.url, cron_params)
