@@ -21,7 +21,7 @@ class Resource(Resource):
     """Adds decorates for all classes inheriting from resource"""
     method_decorators = [auth.login_required]
 
-class Link(Resource):
+class LinkScan(Resource):
     def get(self):
         """Scan a website for 404 errors and get a report"""
         parser = reqparse.RequestParser()
@@ -49,5 +49,5 @@ class ScanJob(Resource):
         return(str(job))
 
 api = Api(app)
-api.add_resource(Link, "/link")
-api.add_resource(ScanJob, "/link/schedule")
+api.add_resource(LinkScan, "/link-scan")
+api.add_resource(ScanJob, "/link-scan/schedule")
