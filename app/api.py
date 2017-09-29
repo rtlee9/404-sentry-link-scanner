@@ -31,7 +31,7 @@ class LinkScan(Resource):
         checker.check_all_links_and_follow()
         return checker.report_errors(lambda status: status == 404)
 
-class ScanJob(Resource):
+class LinkScanJob(Resource):
     def post(self):
         """Post a recurring scan job"""
         parser = reqparse.RequestParser()
@@ -50,4 +50,4 @@ class ScanJob(Resource):
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
-api.add_resource(ScanJob, "/link-scan/schedule")
+api.add_resource(LinkScanJob, "/link-scan/schedule")
