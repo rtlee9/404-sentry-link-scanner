@@ -233,11 +233,9 @@ def scan(root_url):
         checker.report_errors(lambda status: status == 404)
 
 
-def scheduled_scan(url, cron_params):
-    checker = LinkChecker(url)
-    print(checker.job.id)
+def scheduled_scan(url, username, cron_params):
     job_params_base = {
-        'id': url,
+        'id': '{};{}'.format(username, url),
         'func': scan,
         'args': (url, ),
         'trigger': 'cron',
