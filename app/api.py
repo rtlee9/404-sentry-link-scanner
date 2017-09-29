@@ -22,8 +22,8 @@ class Resource(Resource):
     method_decorators = [auth.login_required]
 
 class LinkScan(Resource):
-    def get(self):
-        """Scan a website for 404 errors and get a report"""
+    def post(self):
+        """Scan a website for 404 errors"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
         args = parser.parse_args()
