@@ -2,6 +2,17 @@
 from . import db
 
 
+class Link(db.Model):
+    """Data model representing a request and response for single link"""
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.Text, index=True)
+    source_url = db.Column(db.Text, index=True)
+    job_id = db.Column(db.Integer, db.ForeignKey('scan_job.id'))
+
+    def __repr__(self):
+        return '<{} --> {}>'.format(self.source_url, self.url)
+
+
 class LinkCheck(db.Model):
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
@@ -21,6 +32,7 @@ class ScanJob(db.Model):
     root_url = db.Column(db.Text, index=True)
     start_time = db.Column(db.DateTime)
     link_checks = db.relationship('LinkCheck', backref='job', lazy='dynamic')
+    links = db.relationship('Link', backref='job', lazy='dynamic')
 
     def __repr__(self):
         return '<URL {} {}>'.format(self.root_url, self.start_time)

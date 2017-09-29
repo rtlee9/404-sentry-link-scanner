@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import datetime
 from .globals import GET_TIMEOUT
 from . import db
-from .models import LinkCheck, ScanJob
+from .models import Link, LinkCheck, ScanJob
 
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
@@ -108,7 +108,6 @@ def standardize_url(url):
 class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
     def __init__(self, url):
-        self.link_tree = {}
         self.links_checked_and_followed = set()
         self.links_checked = []
         self.url = standardize_url(url)
@@ -172,9 +171,10 @@ class LinkChecker(object):
         url_standardized = standardize_url(url)
         print('Checking all links found in {}'.format(url_standardized))
         links = get_all_links(url_standardized)
-        self.link_tree[url_standardized] = [
-            standardize_url(link) for link in links
-            if not is_internal_link(link, url_standardized)]
+        for link in links:
+            link_record = Link(url=link, source_url=url_standardized, job=self.job)
+            db.session.add(link_record)
+        db.session.commit()
         internal_links, external_links = group_links_internal_external(links, url_standardized)
 
         # check links and return internal links for following
@@ -199,18 +199,30 @@ class LinkChecker(object):
         matching function `matcher`"""
         return LinkCheck.query.\
             filter(LinkCheck.job == self.job).\
-            filter(matcher(LinkCheck.response)).all()
+            filter(matcher(LinkCheck.response))
 
     def report_errors(self, matcher):
         """Print any errors matching function `matcher`"""
+
+        # get list of errors
         errors = self.get_errors(matcher)
-        error_sources = {error.url: [] for error in errors}
-        for error in errors:
-            for key, value in self.link_tree.items():
-                if error.url in value:
-                    error_sources[error.url].append(key)
-        print(error_sources)
-        return error_sources
+
+        # get sources
+        error_sources = Link.query.\
+            filter(Link.url.in_(errors.with_entities(LinkCheck.url))).\
+            filter(Link.job == self.job).\
+            with_entities(Link.url, Link.source_url).all()
+
+        # format sources > error mapping
+        error_report = {}
+        for error_source in error_sources:
+            source_url = error_source.source_url
+            url = error_source.url
+            error_report[url] = error_report.get(url, []) + [source_url]
+
+        # print and return
+        print(error_report)
+        return error_report
 
 
 if __name__ == '__main__':
