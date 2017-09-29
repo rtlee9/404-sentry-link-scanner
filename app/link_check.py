@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from .globals import GET_TIMEOUT
-from . import db
+from . import app, db, scheduler
 from .models import Link, LinkCheck, ScanJob
 
 def get_all_links(url):
@@ -225,13 +225,31 @@ class LinkChecker(object):
         return error_report
 
 
+def scan(root_url):
+    with app.app_context():
+        print('Scanning [{}]'.format(datetime.datetime.now().time()))
+        checker = LinkChecker(root_url)
+        checker.check_all_links_and_follow()
+        checker.report_errors(lambda status: status == 404)
+
+
+def scheduled_scan(url, cron_params):
+    checker = LinkChecker(url)
+    print(checker.job.id)
+    job_params_base = {
+        'id': url,
+        'func': scan,
+        'args': (url, ),
+        'trigger': 'cron',
+    }
+    job_params = {**job_params_base, **cron_params}
+    return scheduler.add_job(**job_params)
+
+
 if __name__ == '__main__':
     # read CLI args
     parser = argparse.ArgumentParser(description='Link checker')
     parser.add_argument(
         '-r', '--root-url', help='Root URL', required=True)
     args = parser.parse_args()
-
-    checker = LinkChecker(args.root_url)
-    checker.check_all_links_and_follow()
-    checker.report_errors(lambda status: status == 404)
+    scan(args.root_url)
