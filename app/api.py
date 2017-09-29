@@ -18,10 +18,12 @@ def verify_password(username, password):
 
 
 class Resource(Resource):
+    """Adds decorates for all classes inheriting from resource"""
     method_decorators = [auth.login_required]
 
 class Link(Resource):
     def get(self):
+        """Scan a website for 404 errors and get a report"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
         args = parser.parse_args()
@@ -31,6 +33,7 @@ class Link(Resource):
 
 class ScanJob(Resource):
     def post(self):
+        """Post a recurring scan job"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
         args = parser.parse_args()
@@ -38,6 +41,7 @@ class ScanJob(Resource):
         scheduled_scan(args.url, g.user.username, cron_params)
 
     def get(self):
+        """Get information about a recurring scan job"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
         args = parser.parse_args()
