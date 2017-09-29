@@ -14,3 +14,4 @@ apscheduler==3.3.1
 passlib==1.7.1
 Flask-HTTPAuth==3.2.3
 gunicorn==19.7.1
+Flask-APScheduler==1.7.0
