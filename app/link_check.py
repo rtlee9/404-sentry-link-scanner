@@ -2,8 +2,10 @@
 import argparse
 import requests
 from bs4 import BeautifulSoup
-from globals import GET_TIMEOUT
-
+import datetime
+from .globals import GET_TIMEOUT
+from . import db
+from .models import Link, LinkCheck, ScanJob
 
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
@@ -93,6 +95,8 @@ def standardize_url(url):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
     """
+    if url.startswith('/') or url.startswith('#'):
+        return url
     url = url.strip().split('#')[0].split('?')[0]
     if url.endswith('/'):
         url = url[:-1]
@@ -104,31 +108,58 @@ def standardize_url(url):
 class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
     def __init__(self, url):
-        self.link_tree = {}
         self.links_checked_and_followed = set()
-        self.links_checked = {}
+        self.links_checked = []
         self.url = standardize_url(url)
+        self.job = ScanJob(root_url=self.url, start_time=datetime.datetime.utcnow())
+        db.session.add(self.job)
+        db.session.commit()
 
     def check_link(self, link):
         """Request the resources specified by `link` and persist the results"""
         link_standardized = standardize_url(link)
-        check_status = dict(
+        link_record_base = dict(
             url_raw=link,
             url=link_standardized,
+            job=self.job,
         )
         if link_standardized in self.links_checked:
             return
         elif is_flat_file(link):
-            check_status['note'] = 'Flat file not checked'
+            linkcheck_record = LinkCheck(
+                **link_record_base,
+                note='Flat file not checked'
+            )
         else:
             try:
                 response = requests.get(link_standardized, timeout=GET_TIMEOUT)
-                check_status['response_status'] = response.status_code
-                check_status['response_text'] = response.text
+                note = None
+                linkcheck_record = LinkCheck(
+                    **link_record_base,
+                    response=response.status_code,
+                    text=response.text,
+                )
             except Exception as exception:
-                check_status['note'] = exception
-        self.links_checked[link_standardized] = check_status
-        return check_status
+                linkcheck_record = LinkCheck(
+                    **link_record_base,
+                    note=str(exception),
+                )
+
+        db.session.add(linkcheck_record)
+        try:
+            db.session.commit()
+        except Exception as exception:
+            # response text contains invalid string literals
+            db.session.rollback()
+            db.session.add(LinkCheck(
+                **link_record_base,
+                response=response.status_code,
+                note=str(exception)))
+            db.session.commit()
+
+        self.links_checked.append(link_standardized)
+        return linkcheck_record
+
 
     def check_links(self, links):
         """Check each link in array `links`"""
@@ -140,7 +171,10 @@ class LinkChecker(object):
         url_standardized = standardize_url(url)
         print('Checking all links found in {}'.format(url_standardized))
         links = get_all_links(url_standardized)
-        self.link_tree[url_standardized] = [standardize_url(link) for link in links if not is_internal_link(link, url_standardized)]
+        for link in links:
+            link_record = Link(url=link, source_url=url_standardized, job=self.job)
+            db.session.add(link_record)
+        db.session.commit()
         internal_links, external_links = group_links_internal_external(links, url_standardized)
 
         # check links and return internal links for following
@@ -163,19 +197,32 @@ class LinkChecker(object):
     def get_errors(self, matcher):
         """Return a formatted JSON document describing any errors
         matching function `matcher`"""
-        return [link['url'] for link in self.links_checked.values()
-                if matcher(link.get('response_status', -1))]
+        return LinkCheck.query.\
+            filter(LinkCheck.job == self.job).\
+            filter(matcher(LinkCheck.response))
 
     def report_errors(self, matcher):
         """Print any errors matching function `matcher`"""
+
+        # get list of errors
         errors = self.get_errors(matcher)
-        error_sources = {error: [] for error in errors}
-        for error in errors:
-            for key, value in self.link_tree.items():
-                if error in value:
-                    error_sources[error].append(key)
-        print(error_sources)
-        return error_sources
+
+        # get sources
+        error_sources = Link.query.\
+            filter(Link.url.in_(errors.with_entities(LinkCheck.url))).\
+            filter(Link.job == self.job).\
+            with_entities(Link.url, Link.source_url).all()
+
+        # format sources > error mapping
+        error_report = {}
+        for error_source in error_sources:
+            source_url = error_source.source_url
+            url = error_source.url
+            error_report[url] = error_report.get(url, []) + [source_url]
+
+        # print and return
+        print(error_report)
+        return error_report
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-from link_check import *
+from app.link_check import *
 
 def test_get_all_links_len_8P():
     assert len(get_all_links('http://eightportions.com')) > 15
@@ -60,10 +60,14 @@ def test_standardize_url():
     assert standardize_url('http://eightportions.com') == 'http://eightportions.com'
     assert standardize_url('http://eightportions.com ') == 'http://eightportions.com'
     assert standardize_url('eightportions.com ') == 'http://eightportions.com'
+    assert standardize_url('/') == '/'
+    assert standardize_url('/asdf') == '/asdf'
+    assert standardize_url('#') == '#'
+    assert standardize_url('#asdf') == '#asdf'
 
 
 def test_links_checked_and_followed():
     test_checker = LinkChecker(' https://eightportions.com/img/Taxi_pick_by_drop.gif')
     test_checker.check_all_links_and_follow()
-    assert test_checker.links_checked == {}
-    assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip')['note'] == 'Flat file not checked'
+    assert test_checker.links_checked == []
+    assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip').note == 'Flat file not checked'
