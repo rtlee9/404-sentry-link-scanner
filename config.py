@@ -7,11 +7,11 @@ class Config(object):
     DEBUG = True
     TESTING = True
     CSRF_ENABLED = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('POSTGRES_URL')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # JOBS = []
     SCHEDULER_JOBSTORES = {
-        'default': SQLAlchemyJobStore(url=os.getenv('POSTGRES_URL'))
+        'default': SQLAlchemyJobStore(url=os.getenv('DATABASE_URL'))
     }
     SCHEDULER_EXECUTORS = {
         'default': {'type': 'threadpool', 'max_workers': 20}
