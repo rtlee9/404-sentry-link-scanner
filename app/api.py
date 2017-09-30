@@ -40,7 +40,7 @@ class LinkScanJob(Resource):
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         cron_params = request.get_json()
-        scheduled_scan(args.url, g.user.username, cron_params, args.owner)
+        return str(scheduled_scan(args.url, g.user.username, cron_params, args.owner))
 
     def get(self):
         """Get information about a recurring scan job"""
