@@ -31,7 +31,7 @@ class LinkScan(Resource):
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
-        checker = LinkChecker(args.url, owner)
+        checker = LinkChecker(args.url, g.user, owner)
         checker.check_all_links_and_follow()
         return jsonify(checker.report_errors(lambda status: status == 404))
 
@@ -45,7 +45,7 @@ class LinkScanJob(Resource):
         owner = args.owner if g.user.admin else None
         cron_params = request.get_json()
         try:
-            job = scheduled_scan(args.url, g.user.username, cron_params, owner)
+            job = scheduled_scan(args.url, g.user, cron_params, owner)
             return jsonify(job_id=job.id)
         except ConflictingIdError:
             response = jsonify(message='This user already has a scheduled job for the root URL provided.')

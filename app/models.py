@@ -35,6 +35,7 @@ class ScanJob(db.Model):
     link_checks = db.relationship('LinkCheck', backref='job', lazy='dynamic')
     links = db.relationship('Link', backref='job', lazy='dynamic')
     owner = db.Column(db.Text, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __repr__(self):
         return '<URL {} {}>'.format(self.root_url, self.start_time)
@@ -46,6 +47,7 @@ class User(db.Model):
     username = db.Column(db.String(32), index = True)
     admin = db.Column(db.Boolean)
     password_hash = db.Column(db.String(128))
+    scan_jobs = db.relationship('ScanJob', backref='user', lazy='dynamic')
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
