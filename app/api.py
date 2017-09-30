@@ -4,7 +4,7 @@ from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
-from .models import User
+from .models import User, ScanJob
 from . import app, scheduler
 from .link_check import LinkChecker, scheduled_scan
 
@@ -22,6 +22,25 @@ def verify_password(username, password):
 class Resource(Resource):
     """Adds decorates for all classes inheriting from resource"""
     method_decorators = [auth.login_required]
+
+
+class HistoricalJobs(Resource):
+    def get(self):
+        """List all historical jobs for a given user.
+        Optionally, specify a root URL and/or owner to filter results
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        owner = args.owner if g.user.admin else None
+        jobs = ScanJob.query.filter(ScanJob.user == g.user)
+        if owner:
+            jobs = jobs.filter(ScanJob.owner == owner)
+        if args.url:
+            jobs = jobs.filter(ScanJob.root_url == args.url)
+        return jsonify([job.to_json() for job in jobs])
+
 
 class LinkScan(Resource):
     def post(self):
@@ -64,4 +83,5 @@ class LinkScanJob(Resource):
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
+api.add_resource(HistoricalJobs, "/jobs/historical")
 api.add_resource(LinkScanJob, "/link-scan/schedule")

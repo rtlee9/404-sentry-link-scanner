@@ -40,6 +40,15 @@ class ScanJob(db.Model):
     def __repr__(self):
         return '<URL {} {}>'.format(self.root_url, self.start_time)
 
+    def to_json(self):
+        return dict(
+            id=self.id,
+            root_url=self.root_url,
+            start_time=self.start_time,
+            owner=self.owner,
+            user_id=self.user_id,
+        )
+
 
 class User(db.Model):
     __tablename__ = 'users'
