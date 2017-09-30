@@ -34,6 +34,7 @@ class ScanJob(db.Model):
     start_time = db.Column(db.DateTime)
     link_checks = db.relationship('LinkCheck', backref='job', lazy='dynamic')
     links = db.relationship('Link', backref='job', lazy='dynamic')
+    owner = db.Column(db.Text, index=True)
 
     def __repr__(self):
         return '<URL {} {}>'.format(self.root_url, self.start_time)

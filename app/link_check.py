@@ -107,11 +107,13 @@ def standardize_url(url):
 
 class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
-    def __init__(self, url):
+    def __init__(self, url, owner=None):
         self.links_checked_and_followed = set()
         self.links_checked = []
         self.url = standardize_url(url)
-        self.job = ScanJob(root_url=self.url, start_time=datetime.datetime.utcnow())
+        self.job = ScanJob(
+            root_url=self.url,
+            start_time=datetime.datetime.utcnow(), owner=owner)
         db.session.add(self.job)
         db.session.commit()
 
@@ -225,19 +227,19 @@ class LinkChecker(object):
         return error_report
 
 
-def scan(root_url):
+def scan(*args, **kwargs):
     with app.app_context():
         print('Scanning [{}]'.format(datetime.datetime.now().time()))
-        checker = LinkChecker(root_url)
+        checker = LinkChecker(*args, **kwargs)
         checker.check_all_links_and_follow()
         checker.report_errors(lambda status: status == 404)
 
 
-def scheduled_scan(url, username, cron_params):
+def scheduled_scan(url, username, cron_params, owner=None):
     job_params_base = {
-        'id': '{};{}'.format(username, url),
+        'id': '{};{};{}'.format(username, owner, url),
         'func': scan,
-        'args': (url, ),
+        'args': (url, owner),
         'trigger': 'cron',
     }
     job_params = {**job_params_base, **cron_params}

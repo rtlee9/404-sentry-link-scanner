@@ -26,8 +26,9 @@ class LinkScan(Resource):
         """Scan a website for 404 errors"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        checker = LinkChecker(args.url)
+        checker = LinkChecker(args.url, args.owner)
         checker.check_all_links_and_follow()
         return checker.report_errors(lambda status: status == 404)
 
@@ -36,16 +37,18 @@ class LinkScanJob(Resource):
         """Post a recurring scan job"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         cron_params = request.get_json()
-        scheduled_scan(args.url, g.user.username, cron_params)
+        scheduled_scan(args.url, g.user.username, cron_params, args.owner)
 
     def get(self):
         """Get information about a recurring scan job"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        job = scheduler.get_job('{};{}'.format(username, args.url)
+        job = scheduler.get_job('{};{};{}'.format(g.user.username, args.owner, args.url))
         return(str(job))
 
 api = Api(app)
