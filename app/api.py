@@ -1,4 +1,5 @@
 from flask import request, g
+from flask.json import jsonify
 from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
@@ -30,7 +31,7 @@ class LinkScan(Resource):
         args = parser.parse_args()
         checker = LinkChecker(args.url, args.owner)
         checker.check_all_links_and_follow()
-        return checker.report_errors(lambda status: status == 404)
+        return jsonify(checker.report_errors(lambda status: status == 404))
 
 class LinkScanJob(Resource):
     def post(self):
@@ -40,7 +41,8 @@ class LinkScanJob(Resource):
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         cron_params = request.get_json()
-        return str(scheduled_scan(args.url, g.user.username, cron_params, args.owner))
+        job = scheduled_scan(args.url, g.user.username, cron_params, args.owner)
+        return jsonify(job_id=job.id)
 
     def get(self):
         """Get information about a recurring scan job"""
@@ -49,7 +51,7 @@ class LinkScanJob(Resource):
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         job = scheduler.get_job('{};{};{}'.format(g.user.username, args.owner, args.url))
-        return(str(job))
+        return jsonify(job_id=job.id)
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
