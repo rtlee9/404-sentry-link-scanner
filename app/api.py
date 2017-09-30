@@ -29,7 +29,8 @@ class LinkScan(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        checker = LinkChecker(args.url, args.owner)
+        owner = args.owner if g.user.admin else None
+        checker = LinkChecker(args.url, owner)
         checker.check_all_links_and_follow()
         return jsonify(checker.report_errors(lambda status: status == 404))
 
@@ -40,8 +41,9 @@ class LinkScanJob(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
+        owner = args.owner if g.user.admin else None
         cron_params = request.get_json()
-        job = scheduled_scan(args.url, g.user.username, cron_params, args.owner)
+        job = scheduled_scan(args.url, g.user.username, cron_params, owner)
         return jsonify(job_id=job.id)
 
     def get(self):
@@ -50,7 +52,8 @@ class LinkScanJob(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        job = scheduler.get_job('{};{};{}'.format(g.user.username, args.owner, args.url))
+        owner = args.owner if g.user.admin else None
+        job = scheduler.get_job('{};{};{}'.format(g.user.username, owner, args.url))
         return jsonify(job_id=job.id)
 
 api = Api(app)
