@@ -3,6 +3,7 @@ from flask.json import jsonify
 from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
+from apscheduler.jobstores.base import ConflictingIdError
 from .models import User
 from . import app, scheduler
 from .link_check import LinkChecker, scheduled_scan
@@ -43,8 +44,13 @@ class LinkScanJob(Resource):
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
         cron_params = request.get_json()
-        job = scheduled_scan(args.url, g.user.username, cron_params, owner)
-        return jsonify(job_id=job.id)
+        try:
+            job = scheduled_scan(args.url, g.user.username, cron_params, owner)
+            return jsonify(job_id=job.id)
+        except ConflictingIdError:
+            response = jsonify(message='This user already has a scheduled job for the root URL provided.')
+            response.status_code = 403
+            return response
 
     def get(self):
         """Get information about a recurring scan job"""
