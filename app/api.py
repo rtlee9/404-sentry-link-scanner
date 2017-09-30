@@ -27,7 +27,7 @@ class LinkScan(Resource):
     def post(self):
         """Scan a website for 404 errors"""
         parser = reqparse.RequestParser()
-        parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
@@ -39,7 +39,7 @@ class LinkScanJob(Resource):
     def post(self):
         """Post a recurring scan job"""
         parser = reqparse.RequestParser()
-        parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
@@ -55,7 +55,7 @@ class LinkScanJob(Resource):
     def get(self):
         """Get information about a recurring scan job"""
         parser = reqparse.RequestParser()
-        parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
