@@ -4,7 +4,7 @@ from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
-from .models import User, ScanJob, LinkCheck
+from .models import User, ScanJob, LinkCheck, ScheduledJob
 from . import app, scheduler, db
 from .link_check import LinkChecker, scheduled_scan
 
@@ -50,16 +50,26 @@ class HistoricalResults(Resource):
 
 class ScheduledJobs(Resource):
     def get(self):
-        """List scheduled jobs for a given user, URL and owner.
+        """List scheduled jobs for a given user.
+        Optionally, specify a root URL and/or owner to filter results
         """
         parser = reqparse.RequestParser()
-        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
-        job_id = '{};{};{}'.format(g.user.username, args.owner, args.url),
-        job = scheduler.get_job(job_id)
-        return jsonify(next_run_time=job.next_run_time, trigger=str(job.trigger))
+        jobs = ScheduledJob.query.filter(ScheduledJob.user == g.user)
+        if owner:
+            jobs = jobs.filter(ScheduledJob.owner == owner)
+        if args.url:
+            jobs = jobs.filter(ScheduledJob.root_url == args.url)
+        scheduled_jobs = filter(
+            lambda x: x is not None,
+            [scheduler.get_job(str(job.id)) for job in jobs])
+        return jsonify([
+            dict(next_run_time=job.next_run_time, trigger=str(job.trigger))
+            for job in scheduled_jobs
+        ])
 
 
 class HistoricalJobs(Resource):
