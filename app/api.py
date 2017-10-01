@@ -4,7 +4,8 @@ from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
-from .models import User, ScanJob, LinkCheck, ScheduledJob
+from sqlalchemy.exc import IntegrityError
+from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL
 from . import app, scheduler, db
 from .link_check import LinkChecker, scheduled_scan, async_scan
 
@@ -130,9 +131,37 @@ class LinkScanJob(Resource):
         job = scheduler.get_job('{};{};{}'.format(g.user.username, owner, args.url))
         return jsonify(job_id=job.id)
 
+class UrlPermissions(Resource):
+    def post(self):
+        """Add permissioned URL for a given user (requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        try:
+            permissioned_url = PermissionedURL(
+                root_url=args.url,
+                user=g.user,
+                owner=args.owner,
+            )
+            db.session.add(permissioned_url)
+            db.session.commit()
+            return jsonify(permissioned_url.to_json())
+        except IntegrityError:
+            response = jsonify(
+                message='URl already permissioned')
+            response.status_code = 403
+            return response
+
+
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
 api.add_resource(HistoricalJobs, "/jobs/historical")
 api.add_resource(HistoricalResults, "/results/historical")
 api.add_resource(LinkScanJob, "/link-scan/schedule")
 api.add_resource(ScheduledJobs, "/jobs/scheduled")
+api.add_resource(UrlPermissions, "/permissions")

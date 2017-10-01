@@ -1,6 +1,7 @@
 """Data models for link check scans"""
 from . import db
 from passlib.apps import custom_app_context as pwd_context
+from sqlalchemy import UniqueConstraint
 
 
 class Link(db.Model):
@@ -81,6 +82,31 @@ class ScanJob(db.Model):
         )
 
 
+class PermissionedURL(db.Model):
+    __tablename__ = 'permissioned_url'
+    """Data model representing a request and response for single link"""
+    id = db.Column(db.Integer, primary_key=True)
+    root_url = db.Column(db.Text, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    owner = db.Column(db.Text, index=True)
+    __table_args__ = (UniqueConstraint(
+        'root_url',
+        'user_id',
+        'owner',
+        name='unique_urls_per_userowner'),)
+
+    def __repr__(self):
+        return '<{} {}>'.format(self.owner, self.root_url)
+
+    def to_json(self):
+        return dict(
+            id=self.id,
+            root_url=self.root_url,
+            user_id=self.user_id,
+            owner=self.owner,
+        )
+
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key = True)
@@ -89,6 +115,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(128))
     scan_jobs = db.relationship('ScanJob', backref='user', lazy='dynamic')
     scheduled_jobs = db.relationship('ScheduledJob', backref='user', lazy='dynamic')
+    permissioned_urls = db.relationship('PermissionedURL', backref='user', lazy='dynamic')
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
