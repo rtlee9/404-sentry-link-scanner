@@ -4,8 +4,8 @@ from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
-from .models import User, ScanJob
-from . import app, scheduler
+from .models import User, ScanJob, LinkCheck
+from . import app, scheduler, db
 from .link_check import LinkChecker, scheduled_scan
 
 # auth setup
@@ -22,6 +22,30 @@ def verify_password(username, password):
 class Resource(Resource):
     """Adds decorates for all classes inheriting from resource"""
     method_decorators = [auth.login_required]
+
+
+class HistoricalResults(Resource):
+    def get(self):
+        """Return the results of a historical job for a given user.
+        Optionally, specify a root URL, job ID, and/or owner to filter results
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('job_id', type=str, help='Job ID')
+        args = parser.parse_args()
+        owner = args.owner if g.user.admin else None
+        if args.job_id:
+            job_id = args.job_id
+        else:
+            last_job_id = db.session.query(db.func.max(ScanJob.id)).filter(ScanJob.user == g.user)
+            if owner:
+                last_job_id = last_job_id.filter(ScanJob.owner == g.owner)
+            if args.url:
+                last_job_id = last_job_id.filter(ScanJob.root_url == args.url)
+            job_id = last_job_id.scalar()
+        last_job_results = LinkCheck.query.filter(LinkCheck.job_id == job_id).all()
+        return jsonify([result.to_json() for result in last_job_results])
 
 
 class HistoricalJobs(Resource):
@@ -84,4 +108,5 @@ class LinkScanJob(Resource):
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
 api.add_resource(HistoricalJobs, "/jobs/historical")
+api.add_resource(HistoricalResults, "/results/historical")
 api.add_resource(LinkScanJob, "/link-scan/schedule")

@@ -27,6 +27,16 @@ class LinkCheck(db.Model):
     def __repr__(self):
         return '<URL {}: {}>'.format(self.url, self.response)
 
+    def to_json(self):
+        return dict(
+            id=self.id,
+            url=self.url_raw,
+            response=self.response,
+            note=self.note,
+            job_id=self.job_id,
+        )
+
+
 class ScanJob(db.Model):
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
