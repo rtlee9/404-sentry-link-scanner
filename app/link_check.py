@@ -237,6 +237,20 @@ def scan(*args, **kwargs):
         checker.report_errors(lambda status: status == 404)
 
 
+def async_scan(url, user, owner=None):
+    scan_record = ScheduledJob(root_url=url, owner=owner, user=user)
+    db.session.add(scan_record)
+    db.session.commit()
+    job_params_base = {
+        'id': str(scan_record.id),
+        'func': scan,
+        'args': (url, user, owner),
+        'trigger': 'date',
+    }
+    job_params = {**job_params_base}
+    return scheduler.add_job(**job_params)
+
+
 def scheduled_scan(url, user, cron_params, owner=None):
     scan_record = ScheduledJob(root_url=url, owner=owner, user=user)
     db.session.add(scan_record)

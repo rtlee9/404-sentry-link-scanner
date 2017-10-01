@@ -6,7 +6,7 @@ from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
 from .models import User, ScanJob, LinkCheck, ScheduledJob
 from . import app, scheduler, db
-from .link_check import LinkChecker, scheduled_scan
+from .link_check import LinkChecker, scheduled_scan, async_scan
 
 # auth setup
 auth = HTTPBasicAuth()
@@ -98,9 +98,8 @@ class LinkScan(Resource):
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
         owner = args.owner if g.user.admin else None
-        checker = LinkChecker(args.url, g.user, owner)
-        checker.check_all_links_and_follow()
-        return jsonify(checker.report_errors(lambda status: status == 404))
+        job = async_scan(args.url, g.user, owner)
+        return jsonify(job_id=job.id)
 
 class LinkScanJob(Resource):
     def post(self):
