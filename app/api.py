@@ -35,13 +35,16 @@ class HistoricalResults(Resource):
         parser.add_argument('owner', type=str, help='Scan job owner')
         parser.add_argument('job_id', type=str, help='Job ID')
         args = parser.parse_args()
-        owner = args.owner if g.user.admin else None
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
         if args.job_id:
             job_id = args.job_id
         else:
-            last_job_id = db.session.query(db.func.max(ScanJob.id)).filter(ScanJob.user == g.user)
-            if owner:
-                last_job_id = last_job_id.filter(ScanJob.owner == g.owner)
+            last_job_id = db.session.query(db.func.max(ScanJob.id)).\
+                filter(ScanJob.user == g.user).\
+                filter(ScanJob.owner == g.owner)
             if args.url:
                 last_job_id = last_job_id.filter(ScanJob.root_url == args.url)
             last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
@@ -60,10 +63,12 @@ class ScheduledJobs(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = args.owner if g.user.admin else None
-        jobs = ScheduledJob.query.filter(ScheduledJob.user == g.user)
-        if owner:
-            jobs = jobs.filter(ScheduledJob.owner == owner)
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
+        jobs = ScheduledJob.query.filter(ScheduledJob.user == g.user).\
+            \filter(ScheduledJob.owner == owner)
         if args.url:
             jobs = jobs.filter(ScheduledJob.root_url == args.url)
         scheduled_jobs = filter(
@@ -84,10 +89,13 @@ class HistoricalJobs(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = args.owner if g.user.admin else None
-        jobs = ScanJob.query.filter(ScanJob.user == g.user)
-        if owner:
-            jobs = jobs.filter(ScanJob.owner == owner)
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
+        jobs = ScanJob.query.\
+            filter(ScanJob.user == g.user).\
+            filter(ScanJob.owner == owner)
         if args.url:
             jobs = jobs.filter(ScanJob.root_url == args.url)
         return jsonify([job.to_json() for job in jobs])
@@ -100,7 +108,10 @@ class LinkScan(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = args.owner if g.user.admin else None
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
         job = async_scan(args.url, g.user, owner)
         return jsonify(job_id=job.id)
 
@@ -111,7 +122,10 @@ class LinkScanJob(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = args.owner if g.user.admin else None
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
         cron_params = request.get_json()
         try:
             job = scheduled_scan(args.url, g.user, cron_params, owner)
@@ -127,8 +141,16 @@ class LinkScanJob(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = args.owner if g.user.admin else None
-        job = scheduler.get_job('{};{};{}'.format(g.user.username, owner, args.url))
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
+        job_records = ScheduledJob.query.\
+            filter(ScheduledJob.user == g.user).\
+            filter(ScheduledJob.owner == owner)
+        if args.url:
+            job_records = job_records.filter(ScheduledJob.root_url == args.url)
+        job = scheduler.get_job(job_records.first())
         return jsonify(job_id=job.id)
 
 class UrlPermissions(Resource):
@@ -138,6 +160,10 @@ class UrlPermissions(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner', type=str, help='Scan job owner')
         args = parser.parse_args()
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -146,7 +172,7 @@ class UrlPermissions(Resource):
             permissioned_url = PermissionedURL(
                 root_url=args.url,
                 user=g.user,
-                owner=args.owner,
+                owner=owner,
             )
             db.session.add(permissioned_url)
             db.session.commit()
