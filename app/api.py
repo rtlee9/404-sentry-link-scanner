@@ -48,6 +48,20 @@ class HistoricalResults(Resource):
         return jsonify([result.to_json() for result in last_job_results])
 
 
+class ScheduledJobs(Resource):
+    def get(self):
+        """List scheduled jobs for a given user, URL and owner.
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('owner', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        owner = args.owner if g.user.admin else None
+        job_id = '{};{};{}'.format(g.user.username, args.owner, args.url),
+        job = scheduler.get_job(job_id)
+        return jsonify(next_run_time=job.next_run_time, trigger=str(job.trigger))
+
+
 class HistoricalJobs(Resource):
     def get(self):
         """List all historical jobs for a given user.
@@ -110,3 +124,4 @@ api.add_resource(LinkScan, "/link-scan")
 api.add_resource(HistoricalJobs, "/jobs/historical")
 api.add_resource(HistoricalResults, "/results/historical")
 api.add_resource(LinkScanJob, "/link-scan/schedule")
+api.add_resource(ScheduledJobs, "/jobs/scheduled")
