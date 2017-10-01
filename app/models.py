@@ -37,6 +37,25 @@ class LinkCheck(db.Model):
         )
 
 
+class ScheduledJob(db.Model):
+    """Data model representing a request and response for single link"""
+    id = db.Column(db.Integer, primary_key=True)
+    root_url = db.Column(db.Text, index=True)
+    owner = db.Column(db.Text, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def __repr__(self):
+        return '<{} {}>'.format(self.owner, self.root_url)
+
+    def to_json(self):
+        return dict(
+            id=self.id,
+            root_url=self.root_url,
+            owner=self.owner,
+            user_id=self.user_id,
+        )
+
+
 class ScanJob(db.Model):
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
@@ -67,6 +86,7 @@ class User(db.Model):
     admin = db.Column(db.Boolean)
     password_hash = db.Column(db.String(128))
     scan_jobs = db.relationship('ScanJob', backref='user', lazy='dynamic')
+    scheduled_jobs = db.relationship('ScheduledJob', backref='user', lazy='dynamic')
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
