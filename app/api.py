@@ -43,9 +43,11 @@ class HistoricalResults(Resource):
                 last_job_id = last_job_id.filter(ScanJob.owner == g.owner)
             if args.url:
                 last_job_id = last_job_id.filter(ScanJob.root_url == args.url)
-            job_id = last_job_id.scalar()
-        last_job_results = LinkCheck.query.filter(LinkCheck.job_id == job_id).all()
-        return jsonify([result.to_json() for result in last_job_results])
+            last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
+        last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
+        return jsonify(
+            job_status=last_job.status,
+            results=[result.to_json() for result in last_job_results])
 
 
 class ScheduledJobs(Resource):

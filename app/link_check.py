@@ -115,6 +115,7 @@ class LinkChecker(object):
             root_url=self.url,
             start_time=datetime.datetime.utcnow(),
             user=user,
+            status='in progress',
             owner=owner)
         db.session.add(self.job)
         db.session.commit()
@@ -197,6 +198,8 @@ class LinkChecker(object):
         internal_links = self.check_all_links(url)
         for internal_link in internal_links:
             self.check_all_links_and_follow(internal_link)
+        self.job.status='completed'
+        db.session.commit()
 
     def get_errors(self, matcher):
         """Return a formatted JSON document describing any errors

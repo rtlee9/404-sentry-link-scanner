@@ -65,9 +65,10 @@ class ScanJob(db.Model):
     links = db.relationship('Link', backref='job', lazy='dynamic')
     owner = db.Column(db.Text, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    status = db.Column(db.Text)
 
     def __repr__(self):
-        return '<URL {} {}>'.format(self.root_url, self.start_time)
+        return '<URL {} {}: {}>'.format(self.root_url, self.start_time, self.status)
 
     def to_json(self):
         return dict(
@@ -76,6 +77,7 @@ class ScanJob(db.Model):
             start_time=self.start_time,
             owner=self.owner,
             user_id=self.user_id,
+            status=self.status,
         )
 
 
