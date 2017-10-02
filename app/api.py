@@ -7,7 +7,7 @@ from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
 from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL
 from . import app, scheduler, db
-from .link_check import LinkChecker, scheduled_scan, async_scan
+from .link_check import LinkChecker, scheduled_scan, async_scan, standardize_url
 
 # auth setup
 auth = HTTPBasicAuth()
@@ -46,7 +46,7 @@ class HistoricalResults(Resource):
                 filter(ScanJob.user == g.user).\
                 filter(ScanJob.owner == g.owner)
             if args.url:
-                last_job_id = last_job_id.filter(ScanJob.root_url == args.url)
+                last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
             last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
         last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
         return jsonify(
@@ -71,7 +71,7 @@ class HistoricalJobs(Resource):
             filter(ScanJob.user == g.user).\
             filter(ScanJob.owner == owner)
         if args.url:
-            jobs = jobs.filter(ScanJob.root_url == args.url)
+            jobs = jobs.filter(ScanJob.root_url == standardize_url(args.url))
         return jsonify([job.to_json() for job in jobs])
 
 
@@ -88,7 +88,7 @@ class LinkScan(Resource):
             owner = args.owner
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
-            filter(PermissionedURL.root_url == args.url).\
+            filter(PermissionedURL.root_url == standardize_url(args.url)).\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user).count()
         if permissioned == 0:
@@ -113,7 +113,7 @@ class LinkScanJob(Resource):
         cron_params = request.get_json()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
-            filter(PermissionedURL.root_url == args.url).\
+            filter(PermissionedURL.root_url == (args.url)).\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user).count()
         if permissioned == 0:
@@ -145,7 +145,7 @@ class LinkScanJob(Resource):
             filter(ScheduledJob.user == g.user).\
             filter(ScheduledJob.owner == owner)
         if args.url:
-            jobs = jobs.filter(ScheduledJob.root_url == args.url)
+            jobs = jobs.filter(ScheduledJob.root_url == standardize_url(args.url))
         scheduled_jobs = filter(
             lambda x: x is not None,
             [scheduler.get_job(str(job.id)) for job in jobs])
@@ -172,7 +172,7 @@ class UrlPermissions(Resource):
             return response
         try:
             permissioned_url = PermissionedURL(
-                root_url=args.url,
+                root_url=standardize_url(args.url),
                 user=g.user,
                 owner=owner,
             )
