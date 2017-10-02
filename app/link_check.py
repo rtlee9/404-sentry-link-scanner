@@ -251,7 +251,7 @@ def async_scan(url, user, owner=None):
         'trigger': 'date',
     }
     job_params = {**job_params_base}
-    return scheduler.add_job(**job_params)
+    return scan_record, scheduler.add_job(**job_params)
 
 
 def scheduled_scan(url, user, cron_params, owner=None):

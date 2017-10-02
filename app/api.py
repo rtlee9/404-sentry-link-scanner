@@ -96,8 +96,8 @@ class LinkScan(Resource):
                 message='User-owner is not permissioned for this website')
             response.status_code = 403
             return response
-        job = async_scan(args.url, g.user, owner)
-        return jsonify(job_id=job.id)
+        job, _ = async_scan(args.url, g.user, owner)
+        return jsonify(job.to_json())
 
 class LinkScanJob(Resource):
     def post(self):
