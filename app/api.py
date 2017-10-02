@@ -41,6 +41,7 @@ class HistoricalResults(Resource):
             owner = args.owner
         if args.job_id:
             job_id = args.job_id
+            last_job_results = LinkCheck.query.filter(LinkCheck.job_id == args.job_id).all()
         else:
             last_job_id = db.session.query(db.func.max(ScanJob.id)).\
                 filter(ScanJob.user == g.user).\
@@ -48,7 +49,7 @@ class HistoricalResults(Resource):
             if args.url:
                 last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
             last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
-        last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
+            last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
         return jsonify(
             job_status=last_job.status,
             results=[result.to_json() for result in last_job_results])
