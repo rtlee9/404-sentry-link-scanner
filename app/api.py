@@ -154,7 +154,11 @@ class LinkScanJob(Resource):
             lambda x: x is not None,
             [scheduler.get_job(str(job.id)) for job in jobs])
         return jsonify([
-            dict(next_run_time=job.next_run_time, trigger=str(job.trigger))
+            dict(
+                next_run_time=job.next_run_time,
+                trigger=str(job.trigger),
+                cron_pattern=str(job.trigger)[:-1].split('[')[1],
+            )
             for job in scheduled_jobs
         ])
 
