@@ -48,7 +48,10 @@ class HistoricalResults(Resource):
                 filter(ScanJob.owner == owner)
             if args.url:
                 last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
-            last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
+            try:
+                last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
+            except IndexError:
+                return jsonify([])
             last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
         return jsonify(
             job_status=last_job.status,
