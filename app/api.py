@@ -45,7 +45,7 @@ class HistoricalResults(Resource):
         else:
             last_job_id = db.session.query(db.func.max(ScanJob.id)).\
                 filter(ScanJob.user == g.user).\
-                filter(ScanJob.owner == g.owner)
+                filter(ScanJob.owner == owner)
             if args.url:
                 last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
             last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
