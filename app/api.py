@@ -189,6 +189,26 @@ class UrlPermissions(Resource):
             response.status_code = 403
             return response
 
+    def get(self):
+        """Add permissioned URL for a given user (requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('owner', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        if (not args.owner) or (not g.user.admin):
+            owner = g.user.username
+        else:
+            owner = args.owner
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        permissioned_urls = PermissionedURL.query.\
+            filter(PermissionedURL.owner == owner).\
+            filter(PermissionedURL.user == g.user)
+        return jsonify([
+            permissioned_url.root_url
+            for permissioned_url in permissioned_urls])
+
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
