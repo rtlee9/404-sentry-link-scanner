@@ -86,6 +86,16 @@ class LinkScan(Resource):
             owner = g.user.username
         else:
             owner = args.owner
+        # confirm url is permissioned for owner-user
+        permissioned = PermissionedURL.query.\
+            filter(PermissionedURL.root_url == args.url).\
+            filter(PermissionedURL.owner == owner).\
+            filter(PermissionedURL.user == g.user).count()
+        if permissioned == 0:
+            response = jsonify(
+                message='User-owner is not permissioned for this website')
+            response.status_code = 403
+            return response
         job = async_scan(args.url, g.user, owner)
         return jsonify(job_id=job.id)
 
@@ -101,6 +111,16 @@ class LinkScanJob(Resource):
         else:
             owner = args.owner
         cron_params = request.get_json()
+        # confirm url is permissioned for owner-user
+        permissioned = PermissionedURL.query.\
+            filter(PermissionedURL.root_url == args.url).\
+            filter(PermissionedURL.owner == owner).\
+            filter(PermissionedURL.user == g.user).count()
+        if permissioned == 0:
+            response = jsonify(
+                message='User-owner is not permissioned for this website')
+            response.status_code = 403
+            return response
         try:
             job = scheduled_scan(args.url, g.user, cron_params, owner)
             return jsonify(job_id=job.id)
