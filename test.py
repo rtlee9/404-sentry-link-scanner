@@ -54,10 +54,10 @@ def test_is_flat_file():
 
 
 def test_standardize_url():
-    assert standardize_url('https://eightportions.com ') == 'https://eightportions.com'
-    assert standardize_url('https://eightportions.com') == 'https://eightportions.com'
-    assert standardize_url('https://eightportions.com/ ') == 'https://eightportions.com'
-    assert standardize_url('https://eightportions.com/') == 'https://eightportions.com'
+    assert standardize_url('https://eightportions.com ') == 'http://eightportions.com'
+    assert standardize_url('https://eightportions.com') == 'http://eightportions.com'
+    assert standardize_url('https://eightportions.com/ ') == 'http://eightportions.com'
+    assert standardize_url('https://eightportions.com/') == 'http://eightportions.com'
     assert standardize_url('http://eightportions.com') == 'http://eightportions.com'
     assert standardize_url('http://eightportions.com ') == 'http://eightportions.com'
     assert standardize_url('eightportions.com ') == 'http://eightportions.com'

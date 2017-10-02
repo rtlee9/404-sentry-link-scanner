@@ -97,7 +97,7 @@ def standardize_url(url):
     """
     if url.startswith('/') or url.startswith('#'):
         return url
-    url = url.strip().split('#')[0].split('?')[0]
+    url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
     if url.endswith('/'):
         url = url[:-1]
     if not url.startswith('http') and not url.startswith('/'):
