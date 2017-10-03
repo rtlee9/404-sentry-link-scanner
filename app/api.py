@@ -52,7 +52,7 @@ class HistoricalResults(Resource):
             try:
                 last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
             except IndexError:
-                return jsonify([])
+                return jsonify({})
             last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
         return jsonify(
             job_status=last_job.status,
