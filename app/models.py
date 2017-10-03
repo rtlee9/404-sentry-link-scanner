@@ -42,17 +42,21 @@ class ScheduledJob(db.Model):
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
     root_url = db.Column(db.Text, index=True)
-    owner = db.Column(db.Text, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
 
     def __repr__(self):
-        return '<{} {}>'.format(self.owner, self.root_url)
+        return '<Scheduled job {} [{}/{}]>'.format(
+            self.root_url,
+            self.user_id,
+            self.owner_id
+        )
 
     def to_json(self):
         return dict(
             id=self.id,
             root_url=self.root_url,
-            owner=self.owner,
+            owner_id=self.owner_id,
             user_id=self.user_id,
         )
 
@@ -64,8 +68,8 @@ class ScanJob(db.Model):
     start_time = db.Column(db.DateTime)
     link_checks = db.relationship('LinkCheck', backref='job', lazy='dynamic')
     links = db.relationship('Link', backref='job', lazy='dynamic')
-    owner = db.Column(db.Text, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
     status = db.Column(db.Text)
 
     def __repr__(self):
@@ -76,7 +80,7 @@ class ScanJob(db.Model):
             id=self.id,
             root_url=self.root_url,
             start_time=self.start_time,
-            owner=self.owner,
+            owner_id=self.owner_id,
             user_id=self.user_id,
             status=self.status,
         )
@@ -88,22 +92,26 @@ class PermissionedURL(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     root_url = db.Column(db.Text, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    owner = db.Column(db.Text, index=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
     __table_args__ = (UniqueConstraint(
         'root_url',
         'user_id',
-        'owner',
+        'owner_id',
         name='unique_urls_per_userowner'),)
 
     def __repr__(self):
-        return '<{} {}>'.format(self.owner, self.root_url)
+        return '<Permissioned URL {} [{}/{}]>'.format(
+            self.root_url,
+            self.user_id,
+            self.owner_id
+        )
 
     def to_json(self):
         return dict(
             id=self.id,
             root_url=self.root_url,
             user_id=self.user_id,
-            owner=self.owner,
+            owner_id=self.owner_id,
         )
 
 
@@ -116,6 +124,7 @@ class User(db.Model):
     scan_jobs = db.relationship('ScanJob', backref='user', lazy='dynamic')
     scheduled_jobs = db.relationship('ScheduledJob', backref='user', lazy='dynamic')
     permissioned_urls = db.relationship('PermissionedURL', backref='user', lazy='dynamic')
+    owners = db.relationship('Owner', backref='user', lazy='dynamic')
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
@@ -125,3 +134,28 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+
+class Owner(db.Model):
+    __tablename__ = 'owners'
+    id = db.Column(db.Integer, primary_key = True)
+    email = db.Column(db.String(50), index = True)
+    stripe_token = db.Column(db.Text)
+    stripe_email = db.Column(db.String(50))
+    scan_jobs = db.relationship('ScanJob', backref='owner', lazy='dynamic')
+    scheduled_jobs = db.relationship('ScheduledJob', backref='owner', lazy='dynamic')
+    permissioned_urls = db.relationship('PermissionedURL', backref='owner', lazy='dynamic')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    __table_args__ = (UniqueConstraint(
+        'email',
+        'user_id',
+        name='unique_user_owners'),)
+
+    def __repr__(self):
+        return '<Owner {}>'.format(self.email)
+
+    def to_json(self):
+        return dict(
+            id=self.id,
+            email=self.email,
+        )

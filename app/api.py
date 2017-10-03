@@ -5,7 +5,7 @@ from flask_httpauth import HTTPBasicAuth
 from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
-from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL
+from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner
 from . import app, scheduler, db
 from .link_check import LinkChecker, scheduled_scan, async_scan, standardize_url
 
@@ -32,13 +32,14 @@ class HistoricalResults(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner ID')
         parser.add_argument('job_id', type=str, help='Job ID')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         if args.job_id:
             job_id = args.job_id
             last_job_results = LinkCheck.query.filter(LinkCheck.job_id == args.job_id).all()
@@ -65,12 +66,13 @@ class HistoricalJobs(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         jobs = ScanJob.query.\
             filter(ScanJob.user == g.user).\
             filter(ScanJob.owner == owner)
@@ -84,12 +86,13 @@ class LinkScan(Resource):
         """Scan a website for 404 errors"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
             filter(PermissionedURL.root_url == standardize_url(args.url)).\
@@ -108,12 +111,13 @@ class LinkScanJob(Resource):
         """Post a recurring scan job"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         cron_params = request.get_json()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
@@ -139,12 +143,13 @@ class LinkScanJob(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument('url', type=str, help='URL to check')
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         jobs = ScheduledJob.query.\
             filter(ScheduledJob.user == g.user).\
             filter(ScheduledJob.owner == owner)
@@ -168,16 +173,17 @@ class UrlPermissions(Resource):
         """Add permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
             return response
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         try:
             permissioned_url = PermissionedURL(
                 root_url=standardize_url(args.url),
@@ -226,16 +232,17 @@ class UrlPermissions(Resource):
     def get(self):
         """Add permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
-        parser.add_argument('owner', type=str, help='Scan job owner')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner) or (not g.user.admin):
-            owner = g.user.username
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
         else:
-            owner = args.owner
+            owner_id = args.owner_id
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
             return response
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         permissioned_urls = PermissionedURL.query.\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user)
@@ -243,6 +250,25 @@ class UrlPermissions(Resource):
             permissioned_url.root_url
             for permissioned_url in permissioned_urls])
 
+class Owners(Resource):
+    def post(self):
+        """Add owner resource (requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
+        else:
+            owner_id = args.owner_id
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        owner = Owner(email=owner_id, user=g.user)
+        db.session.add(owner)
+        db.session.commit()
+        return jsonify(owner.to_json())
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
@@ -250,3 +276,4 @@ api.add_resource(HistoricalJobs, "/jobs/historical")
 api.add_resource(HistoricalResults, "/results/historical")
 api.add_resource(LinkScanJob, "/link-scan/schedule")
 api.add_resource(UrlPermissions, "/permissions")
+api.add_resource(Owners, "/owners")
