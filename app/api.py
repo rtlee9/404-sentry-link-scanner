@@ -5,7 +5,7 @@ from flask_httpauth import HTTPBasicAuth
 from requests import get
 from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
-from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner
+from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner, Link
 from . import app, scheduler, db
 from .link_check import LinkChecker, scheduled_scan, async_scan, standardize_url
 
@@ -50,11 +50,26 @@ class HistoricalResults(Resource):
             response = jsonify(message='Job not found')
             response.status_code = 404
             return response
-        last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
+        last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job)
+
+        # get sources
+        link_sources = Link.query.\
+            filter(Link.url.in_(last_job_results.with_entities(LinkCheck.url))).\
+            filter(Link.job == last_job).\
+            with_entities(Link.url, Link.source_url).all()
+
+        # format sources > error mapping
+        source_report = {}
+        for link_source in link_sources:
+            source_url = link_source.source_url
+            url = link_source.url
+            source_report[url] = source_report.get(url, []) + [source_url]
 
         return jsonify(
             job_status=last_job.status,
-            results=[result.to_json() for result in last_job_results])
+            results=[result.to_json() for result in last_job_results.all()],
+            sources=source_report,
+        )
 
 
 class HistoricalJobs(Resource):
