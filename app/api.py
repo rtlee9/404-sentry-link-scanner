@@ -256,6 +256,8 @@ class Owners(Resource):
         """Add owner resource (requires admin rights)"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('stripe_token', type=str, help='Stripe token')
+        parser.add_argument('stripe_email', type=str, help='Email from Stripe checkout')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
         if (not args.owner_id) or (not g.user.admin):
@@ -267,7 +269,12 @@ class Owners(Resource):
             response.status_code = 403
             return response
         try:
-            owner = Owner(email=owner_id, user=g.user)
+            owner = Owner(
+                email=owner_id,
+                user=g.user,
+                stripe_token=args.stripe_token,
+                stripe_email=args.stripe_email,
+            )
             db.session.add(owner)
             db.session.commit()
             return jsonify(owner.to_json())
@@ -276,7 +283,14 @@ class Owners(Resource):
             owner = Owner.query.\
                 filter(Owner.email == owner_id).\
                 filter(Owner.user == g.user).first()
-            response = jsonify(message='Owner already exists', owner=owner.to_json())
+            if args.stripe_token and (args.stripe_token != owner.stripe_token):
+                owner.stripe_token = args.stripe_token
+                owner.stripe_email = args.stripe_email
+                db.session.commit()
+                message = 'Owner already exists; token updated'
+            else:
+                message = 'Owner already exists'
+            response = jsonify(message=message, owner=owner.to_json())
             response.status_code = 404
             return response
 
