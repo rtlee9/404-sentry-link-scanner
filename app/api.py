@@ -297,6 +297,29 @@ class Owners(Resource):
             response.status_code = 404
             return response
 
+    def get(self):
+        """Get owner resource (requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('owner_id', required=True, type=str)
+        args = parser.parse_args()
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
+        else:
+            owner_id = args.owner_id
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        try:
+            owner = Owner.query.\
+                filter(Owner.email == owner_id).\
+                filter(Owner.user == g.user).first()
+            return jsonify(owner.to_json())
+        except AttributeError:
+            response = jsonify(message='Owner does not exist')
+            response.status_code = 404
+            return response
+
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
 api.add_resource(HistoricalJobs, "/jobs/historical")

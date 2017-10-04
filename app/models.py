@@ -159,4 +159,7 @@ class Owner(db.Model):
         return dict(
             id=self.id,
             email=self.email,
+            stripe_token=self.stripe_token,
+            stripe_email=self.stripe_email,
+            stripe_customer_id=self.stripe_customer_id,
         )
