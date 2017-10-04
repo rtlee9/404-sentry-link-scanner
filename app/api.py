@@ -266,10 +266,19 @@ class Owners(Resource):
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
             return response
-        owner = Owner(email=owner_id, user=g.user)
-        db.session.add(owner)
-        db.session.commit()
-        return jsonify(owner.to_json())
+        try:
+            owner = Owner(email=owner_id, user=g.user)
+            db.session.add(owner)
+            db.session.commit()
+            return jsonify(owner.to_json())
+        except IntegrityError:
+            db.session.rollback()
+            owner = Owner.query.\
+                filter(Owner.email == owner_id).\
+                filter(Owner.user == g.user).first()
+            response = jsonify(message='Owner already exists', owner=owner.to_json())
+            response.status_code = 404
+            return response
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")
