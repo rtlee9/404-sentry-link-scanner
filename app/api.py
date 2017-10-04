@@ -194,6 +194,7 @@ class UrlPermissions(Resource):
             db.session.commit()
             return jsonify(permissioned_url.to_json())
         except IntegrityError:
+            db.session.rollback()
             response = jsonify(
                 message='URl already permissioned')
             response.status_code = 403
