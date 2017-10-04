@@ -198,8 +198,6 @@ class LinkChecker(object):
         internal_links = self.check_all_links(url)
         for internal_link in internal_links:
             self.check_all_links_and_follow(internal_link)
-        self.job.status='completed'
-        db.session.commit()
 
     def get_errors(self, matcher):
         """Return a formatted JSON document describing any errors
@@ -238,6 +236,8 @@ def scan(*args, **kwargs):
         checker = LinkChecker(*args, **kwargs)
         checker.check_all_links_and_follow()
         checker.report_errors(lambda status: status == 404)
+        checker.job.status='completed'
+        db.session.commit()
 
 
 def async_scan(url, user, owner=None):
