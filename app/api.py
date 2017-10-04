@@ -258,6 +258,7 @@ class Owners(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('stripe_token', type=str, help='Stripe token')
         parser.add_argument('stripe_email', type=str, help='Email from Stripe checkout')
+        parser.add_argument('stripe_customer_id', type=str, help='Stripe customer ID')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
         if (not args.owner_id) or (not g.user.admin):
@@ -274,6 +275,7 @@ class Owners(Resource):
                 user=g.user,
                 stripe_token=args.stripe_token,
                 stripe_email=args.stripe_email,
+                stripe_customer_id=args.stripe_customer_id,
             )
             db.session.add(owner)
             db.session.commit()
@@ -286,6 +288,7 @@ class Owners(Resource):
             if args.stripe_token and (args.stripe_token != owner.stripe_token):
                 owner.stripe_token = args.stripe_token
                 owner.stripe_email = args.stripe_email
+                owner.stripe_customer_id = args.stripe_customer_id
                 db.session.commit()
                 message = 'Owner already exists; token updated'
             else:

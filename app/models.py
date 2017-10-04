@@ -142,6 +142,7 @@ class Owner(db.Model):
     email = db.Column(db.String(50), index = True)
     stripe_token = db.Column(db.Text)
     stripe_email = db.Column(db.String(50))
+    stripe_customer_id = db.Column(db.String(50))
     scan_jobs = db.relationship('ScanJob', backref='owner', lazy='dynamic')
     scheduled_jobs = db.relationship('ScheduledJob', backref='owner', lazy='dynamic')
     permissioned_urls = db.relationship('PermissionedURL', backref='owner', lazy='dynamic')
