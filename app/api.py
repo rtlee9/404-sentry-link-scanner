@@ -28,34 +28,30 @@ class Resource(Resource):
 class HistoricalResults(Resource):
     def get(self):
         """Return the results of a historical job for a given user.
-        Optionally, specify a root URL, job ID, and/or owner to filter results
+        Optionally, specify a root URL and/or owner to filter results
         """
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner ID')
-        parser.add_argument('job_id', type=str, help='Job ID')
         args = parser.parse_args()
         if (not args.owner_id) or (not g.user.admin):
             owner_id = g.user.username
         else:
             owner_id = args.owner_id
         owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
-        if args.job_id:
-            job_id = args.job_id
-            last_job_results = LinkCheck.query.filter(LinkCheck.job_id == args.job_id).all()
-        else:
-            last_job_id = db.session.query(db.func.max(ScanJob.id)).\
-                filter(ScanJob.user == g.user).\
-                filter(ScanJob.owner == owner)
-            if args.url:
-                last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
-            try:
-                last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
-            except IndexError:
-                response = jsonify(message='Job not found')
-                response.status_code = 404
-                return response
-            last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
+        last_job_id = db.session.query(db.func.max(ScanJob.id)).\
+            filter(ScanJob.user == g.user).\
+            filter(ScanJob.owner == owner)
+        if args.url:
+            last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
+        try:
+            last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
+        except IndexError:
+            response = jsonify(message='Job not found')
+            response.status_code = 404
+            return response
+        last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job).all()
+
         return jsonify(
             job_status=last_job.status,
             results=[result.to_json() for result in last_job_results])
