@@ -193,6 +193,36 @@ class UrlPermissions(Resource):
             response.status_code = 403
             return response
 
+    def delete(self):
+        """Delete permissioned URL for a given user (requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
+        else:
+            owner_id = args.owner_id
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        depermissioned_urls = PermissionedURL.query.\
+            filter(PermissionedURL.root_url == standardize_url(args.url)).\
+            filter(PermissionedURL.user == g.user).\
+            filter(PermissionedURL.owner == owner).all()
+        if len(depermissioned_urls) == 0:
+            response = jsonify(
+                message='Resource not found')
+            response.status_code = 404
+            return response
+        depermissioned_url_details = [url.to_json() for url in depermissioned_urls]
+        for depermissioned_url in depermissioned_urls:
+            db.session.delete(depermissioned_url)
+        db.session.commit()
+        return jsonify(depermissioned_url_details)
+
     def get(self):
         """Add permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
