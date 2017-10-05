@@ -66,7 +66,7 @@ class HistoricalResults(Resource):
             source_report[url] = source_report.get(url, []) + [source_url]
 
         return jsonify(
-            job_status=last_job.status,
+            job=last_job.to_json(),
             results=[result.to_json() for result in last_job_results.all()],
             sources=source_report,
         )
