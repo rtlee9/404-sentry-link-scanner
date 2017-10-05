@@ -222,6 +222,31 @@ class UrlPermissions(Resource):
             response.status_code = 403
             return response
 
+    def patch(self):
+        """Update permissioned URL for a given user
+        with provided URL paramters by job ID(requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('id', required=True, type=str, help='Permissioned URL ID')
+        parser.add_argument('url', required=True, type=str, help='URL to check')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
+        parser.add_argument(
+            'stripe_subscription_id', required=True, type=str, help='Stripe subscription ID')
+        args = parser.parse_args()
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
+        else:
+            owner_id = args.owner_id
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+
+        permissioned_url = PermissionedURL.query.filter(PermissionedURL.id == args.id).first()
+        permissioned_url.stripe_subscription_id = args.stripe_subscription_id
+        db.session.commit()
+        return jsonify(permissioned_url.to_json())
+
     def delete(self):
         """Delete permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
