@@ -187,6 +187,8 @@ class UrlPermissions(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
+        parser.add_argument(
+            'stripe_subscription_id', type=str, help='Stripe subscription ID')
         args = parser.parse_args()
         if (not args.owner_id) or (not g.user.admin):
             owner_id = g.user.username
@@ -202,6 +204,7 @@ class UrlPermissions(Resource):
                 root_url=standardize_url(args.url),
                 user=g.user,
                 owner=owner,
+                stripe_subscription_id=args.stripe_subscription_id,
             )
             db.session.add(permissioned_url)
             db.session.commit()

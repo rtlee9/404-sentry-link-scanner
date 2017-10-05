@@ -90,6 +90,7 @@ class PermissionedURL(db.Model):
     __tablename__ = 'permissioned_url'
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
+    stripe_subscription_id = db.Column(db.String(32))
     root_url = db.Column(db.Text, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
@@ -112,6 +113,7 @@ class PermissionedURL(db.Model):
             root_url=self.root_url,
             user_id=self.user_id,
             owner_id=self.owner_id,
+            stripe_subscription_id=self.stripe_subscription_id
         )
 
 
