@@ -14,7 +14,7 @@ def get_all_links(url):
     html = requests.get(url).content
     soup = BeautifulSoup(html, 'lxml')
     return [
-        standardize_url(a['href']) for a in soup.find_all('a')
+        a['href'] for a in soup.find_all('a')
         if a.has_attr('href')]
 
 
@@ -66,8 +66,8 @@ def group_links_internal_external(links, url):
     internal_links = []
     external_links = []
     for link in links:
-        if is_internal_link(link, url):
-            internal_links.append(prepend_if_relative(link, url))
+        if is_internal_link(standardize_url(link), url):
+            internal_links.append(prepend_if_relative(standardize_url(link), url))
         else:
             external_links.append(link)
     return internal_links, external_links
@@ -124,7 +124,7 @@ class LinkChecker(object):
 
     def check_link(self, link):
         """Request the resources specified by `link` and persist the results"""
-        link_standardized = standardize_url(link)
+        link_standardized = link
         link_record_base = dict(
             url_raw=link,
             url=link_standardized,
@@ -178,10 +178,6 @@ class LinkChecker(object):
         url_standardized = standardize_url(url)
         print('Checking all links found in {}'.format(url_standardized))
         links = get_all_links(url_standardized)
-        for link in links:
-            link_record = Link(url=link, source_url=url_standardized, job=self.job)
-            db.session.add(link_record)
-        db.session.commit()
         _internal_links, external_links = group_links_internal_external(links, url_standardized)
         internal_links = []
         for internal_link in _internal_links:
@@ -190,6 +186,13 @@ class LinkChecker(object):
             else:
                 # link is above root so we don't want to scan it's children
                 external_links.append(internal_link)
+
+        # persist source links
+        standardized_links = internal_links + external_links
+        for link in links:
+            link_record = Link(url=link, source_url=url_standardized, job=self.job)
+            db.session.add(link_record)
+        db.session.commit()
 
         # check links and return internal links for following
         self.check_links(internal_links)
