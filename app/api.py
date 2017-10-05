@@ -211,8 +211,14 @@ class UrlPermissions(Resource):
             return jsonify(permissioned_url.to_json())
         except IntegrityError:
             db.session.rollback()
+            permissioned_url = PermissionedURL.query.\
+                filter(PermissionedURL.root_url == standardize_url(args.url)).\
+                filter(PermissionedURL.user == g.user).\
+                filter(PermissionedURL.owner == owner).first()
             response = jsonify(
-                message='URl already permissioned')
+                message='URl already permissioned',
+                permissioned_url=permissioned_url.to_json(),
+            )
             response.status_code = 403
             return response
 
