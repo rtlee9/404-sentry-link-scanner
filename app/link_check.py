@@ -189,7 +189,7 @@ class LinkChecker(object):
 
         # persist source links
         standardized_links = internal_links + external_links
-        for link in links:
+        for link in standardized_links:
             link_record = Link(url=link, source_url=url_standardized, job=self.job)
             db.session.add(link_record)
         db.session.commit()

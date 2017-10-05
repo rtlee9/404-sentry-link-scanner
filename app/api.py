@@ -116,7 +116,7 @@ class LinkScan(Resource):
                 message='User-owner is not permissioned for this website')
             response.status_code = 403
             return response
-        job, _ = async_scan(args.url, g.user, owner)
+        job, _ = async_scan(standardize_url(args.url), g.user, owner)
         return jsonify(job.to_json())
 
 class LinkScanJob(Resource):
@@ -134,7 +134,7 @@ class LinkScanJob(Resource):
         cron_params = request.get_json()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
-            filter(PermissionedURL.root_url == (args.url)).\
+            filter(PermissionedURL.root_url == standardize_url(args.url)).\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user).count()
         if permissioned == 0:
@@ -143,7 +143,7 @@ class LinkScanJob(Resource):
             response.status_code = 403
             return response
         try:
-            job = scheduled_scan(args.url, g.user, cron_params, owner)
+            job = scheduled_scan(standardize_url(args.url), g.user, cron_params, owner)
             return jsonify(job_id=job.id)
         except ConflictingIdError:
             response = jsonify(message='This user already has a scheduled job for the root URL provided.')
