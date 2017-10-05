@@ -182,7 +182,14 @@ class LinkChecker(object):
             link_record = Link(url=link, source_url=url_standardized, job=self.job)
             db.session.add(link_record)
         db.session.commit()
-        internal_links, external_links = group_links_internal_external(links, url_standardized)
+        _internal_links, external_links = group_links_internal_external(links, url_standardized)
+        internal_links = []
+        for internal_link in _internal_links:
+            if internal_link.startswith(self.url):
+                internal_links.append(internal_link)
+            else:
+                # link is above root so we don't want to scan it's children
+                external_links.append(internal_link)
 
         # check links and return internal links for following
         self.check_links(internal_links)
