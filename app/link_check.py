@@ -52,8 +52,10 @@ def is_internal_link(link, reference_url):
 
 def prepend_if_relative(link, url):
     """Standardize `link` by prepending it with the hostname if relative"""
-    if link.startswith('/') or link.startswith('#'):
+    if link.startswith('/'):
         return get_hostname(url) + link
+    if link.startswith('#'):
+        return url + link
     return link
 
 
