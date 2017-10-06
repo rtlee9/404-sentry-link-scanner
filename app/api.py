@@ -331,16 +331,8 @@ class Owners(Resource):
             owner = Owner.query.\
                 filter(Owner.email == owner_id).\
                 filter(Owner.user == g.user).first()
-            if args.stripe_token and (args.stripe_token != owner.stripe_token):
-                owner.stripe_token = args.stripe_token
-                owner.stripe_email = args.stripe_email
-                owner.stripe_customer_id = args.stripe_customer_id
-                db.session.commit()
-                message = 'Owner already exists; token updated'
-            else:
-                message = 'Owner already exists'
-            response = jsonify(message=message, owner=owner.to_json())
-            response.status_code = 404
+            response = jsonify(message='Owner already exists', owner=owner.to_json())
+            response.status_code = 403
             return response
 
     def get(self):
