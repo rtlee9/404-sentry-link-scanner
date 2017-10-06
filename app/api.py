@@ -302,7 +302,6 @@ class Owners(Resource):
     def post(self):
         """Add owner resource (requires admin rights)"""
         parser = reqparse.RequestParser()
-        parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('stripe_token', type=str, help='Stripe token')
         parser.add_argument('stripe_email', type=str, help='Email from Stripe checkout')
         parser.add_argument('stripe_customer_id', type=str, help='Stripe customer ID')
