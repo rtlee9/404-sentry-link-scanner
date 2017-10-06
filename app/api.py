@@ -335,6 +335,38 @@ class Owners(Resource):
             response.status_code = 403
             return response
 
+    def patch(self):
+        """Patch owner by owner ID (requires admin rights)"""
+        parser = reqparse.RequestParser()
+        parser.add_argument('stripe_token', type=str, help='Stripe token')
+        parser.add_argument('stripe_email', type=str, help='Email from Stripe checkout')
+        parser.add_argument('stripe_customer_id', type=str, help='Stripe customer ID')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
+        parser.add_argument('id', required=True, type=int, help='API owner ID')
+        args = parser.parse_args()
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
+        else:
+            owner_id = args.owner_id
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        try:
+            owner = Owner.query.filter(Owner.id == args.id).first()
+            owner.email=owner_id
+            owner.user=g.user
+            owner.stripe_token=args.stripe_token
+            owner.stripe_email=args.stripe_email
+            owner.stripe_customer_id=args.stripe_customer_id
+            db.session.commit()
+            return jsonify(owner.to_json())
+        except AttributeError:
+            db.session.rollback()
+            response = jsonify(message='Owner does not exist')
+            response.status_code = 404
+            return response
+
     def get(self):
         """Get owner resource (requires admin rights)"""
         parser = reqparse.RequestParser()
