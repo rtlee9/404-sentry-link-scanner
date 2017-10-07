@@ -39,6 +39,8 @@ def test_prepend_if_relative():
     assert prepend_if_relative('/', 'https://eightportions.com') == 'https://eightportions.com/'
     assert prepend_if_relative('/page', 'https://eightportions.com') == 'https://eightportions.com/page'
     assert prepend_if_relative('/page', 'http://eightportions.com') == 'http://eightportions.com/page'
+    assert prepend_if_relative('#anchor1', 'http://eightportions.com') == 'http://eightportions.com'
+    assert prepend_if_relative('#anchor1', 'http://eightportions.com', keep_anchors=True) == 'http://eightportions.com#anchor1'
     assert prepend_if_relative('/page1/subpage1', 'http://eightportions.com') == 'http://eightportions.com/page1/subpage1'
     assert prepend_if_relative('http://eightportions.com', 'http://eightportions.com') == 'http://eightportions.com'
 
