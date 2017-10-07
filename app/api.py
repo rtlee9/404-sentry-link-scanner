@@ -180,6 +180,34 @@ class LinkScanJob(Resource):
             for job in scheduled_jobs
         ])
 
+    def delete(self):
+        """List scheduled jobs for a given user.
+        Optionally, specify a root URL and/or owner to filter results
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', type=str, help='URL to check')
+        parser.add_argument('owner_id', type=str, help='Scan job owner')
+        args = parser.parse_args()
+        if (not args.owner_id) or (not g.user.admin):
+            owner_id = g.user.username
+        else:
+            owner_id = args.owner_id
+        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        jobs = ScheduledJob.query.\
+            filter(ScheduledJob.user == g.user).\
+            filter(ScheduledJob.owner == owner)
+        if args.url:
+            jobs = jobs.filter(ScheduledJob.root_url == standardize_url(args.url))
+        scheduled_jobs_summary = []
+        for job in jobs:
+            scheduled_job = scheduler.get_job(str(job.id))
+            if scheduled_job is not None:
+                scheduled_job.remove()
+                scheduled_jobs_summary.append(job.to_json())
+                db.session.delete(job)
+        db.session.commit()
+        return scheduled_jobs_summary
+
 
 class UrlPermissions(Resource):
     def post(self):
