@@ -97,7 +97,9 @@ def standardize_url(url):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
     """
-    if url.startswith('/') or url.startswith('#'):
+    if url.startswith('//'):
+        url = 'http:' + url
+    elif url.startswith('/') or url.startswith('#'):
         return url
     url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
     if url.endswith('/'):

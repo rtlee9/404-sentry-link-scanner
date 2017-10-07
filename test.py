@@ -65,6 +65,7 @@ def test_standardize_url():
     assert standardize_url('/asdf') == '/asdf'
     assert standardize_url('#') == '#'
     assert standardize_url('#asdf') == '#asdf'
+    assert standardize_url('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button'
 
 
 def test_links_checked_and_followed_eightportions():
