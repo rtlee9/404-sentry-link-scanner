@@ -81,7 +81,7 @@ def group_links_internal_external(links, url):
         if is_internal_link(standardize_url(link), url):
             internal_links.append(prepend_if_relative(standardize_url(link), url))
         else:
-            external_links.append(link)
+            external_links.append(ensure_protocol(link.strip()))
     return internal_links, external_links
 
 
