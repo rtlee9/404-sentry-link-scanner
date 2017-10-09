@@ -20,7 +20,10 @@ def get_all_links(url):
 
 def get_base_url(url):
     """Strip the scheme and trailing slashes from the URL"""
-    url_root = '//'.join(url.split('//')[1:])
+    if (url.startswith('http')) and ('//' in url):
+        url_root = '//'.join(url.split('//')[1:])
+    else:
+        url_root = url
     url_stripped = url_root[:-1] if url_root.endswith('/') else url_root
     return url_stripped
 

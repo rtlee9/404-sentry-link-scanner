@@ -12,6 +12,10 @@ def test_get_base_url():
     assert get_base_url('https://eightp//ortions.com') == 'eightp//ortions.com'
 
 
+def test_get_base_url_no_protocol():
+    assert get_base_url('eightportions.com') == 'eightportions.com'
+
+
 def test_get_hostname():
     assert get_hostname('https://eightportions.com') == 'https://eightportions.com'
     assert get_hostname('http://eightportions.com') == 'http://eightportions.com'
