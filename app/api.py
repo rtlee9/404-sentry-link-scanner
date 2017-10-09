@@ -3,11 +3,14 @@ from flask.json import jsonify
 from flask_restful import Api, Resource, reqparse
 from flask_httpauth import HTTPBasicAuth
 from requests import get
+import datetime
 from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
 from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner, Link
 from . import app, scheduler, db
-from .link_check import LinkChecker, scheduled_scan, async_scan, standardize_url
+from .link_check import LinkChecker, standardize_url
+from .email import send_email
+
 
 # auth setup
 auth = HTTPBasicAuth()
@@ -18,6 +21,94 @@ def verify_password(username, password):
         return False
     g.user = user
     return True
+
+
+def email_results(job):
+    job_results = LinkCheck.query.filter(LinkCheck.job == job)
+
+    # get sources
+    link_sources = Link.query.\
+        filter(Link.url.in_(job_results.with_entities(LinkCheck.url))).\
+        filter(Link.job == job).\
+        with_entities(Link.url, Link.source_url).all()
+
+    # format sources > error mapping
+    source_report = {}
+    for link_source in link_sources:
+        source_url = link_source.source_url
+        url = link_source.url
+        source_report[url] = source_report.get(url, []) + [source_url]
+
+    # generate email message body
+    errors = job_results.filter(LinkCheck.response == 404)
+    message = "<p>Hi,</p><p>I just finished scanning {} for potential errors, and I found {} 404 error{} I think you should review{}.</p>".format(
+        '<a href="{}">{}</a>'.format(job.root_url, job.root_url),
+        errors.count(),
+        's' if errors.count() > 1 else '',
+        ':' if errors.count() > 0 else '',
+    )
+    if errors.count() > 0:
+        message += '<ul>'
+        for error in errors.all():
+            message += '<li>{} (linked to from {} pages)</li>'.format(
+                error.url, len(source_report.get(error.url)))
+        message += '</ul>'
+    message += '<p>The full results for this scan can be viewed at <a href="https://404sentry.com/dashboard">404sentry.com</a>.</p><p>As always, please don\'t hesitate to respond to this email with any questions, comments or concerns.</p><p>Thanks,<br>404 Sentry</p>'
+
+    send_email(
+        to_address=job.owner.stripe_email,
+        to_name="",  #TODO dynamically retreive name
+        subject="Your 404 Sentry scan results for {}".format(job.root_url),
+        message_content=message,
+    )
+
+    return dict(
+        job=job.to_json(),
+        results=[result.to_json() for result in job_results.all()],
+        sources=source_report,
+    )
+
+def scan(*args, **kwargs):
+    with app.app_context():
+        print('Scanning [{}]'.format(datetime.datetime.now().time()))
+        email = kwargs.pop('email', False)
+        checker = LinkChecker(*args, **kwargs)
+        checker.check_all_links_and_follow()
+        checker.report_errors(lambda status: status == 404)
+        checker.job.status='completed'
+        db.session.commit()
+        if email:
+            print('Sending email')
+            email_results(checker.job)
+
+
+def async_scan(url, user, owner=None):
+    scan_record = ScheduledJob(root_url=url, owner=owner, user=user)
+    db.session.add(scan_record)
+    db.session.commit()
+    job_params_base = {
+        'id': str(scan_record.id),
+        'func': scan,
+        'args': (url, user, owner),
+        'trigger': 'date',
+    }
+    job_params = {**job_params_base}
+    return scan_record, scheduler.add_job(**job_params)
+
+
+def scheduled_scan(url, user, cron_params, owner=None):
+    scan_record = ScheduledJob(root_url=url, owner=owner, user=user)
+    db.session.add(scan_record)
+    db.session.commit()
+    job_params_base = {
+        'id': str(scan_record.id),
+        'func': scan,
+        'args': (url, user, owner),
+        'kwargs': {'email': True},
+        'trigger': 'cron',
+    }
+    job_params = {**job_params_base, **cron_params}
+    return scheduler.add_job(**job_params)
 
 
 class Resource(Resource):

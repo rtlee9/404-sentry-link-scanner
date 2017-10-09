@@ -8,6 +8,8 @@ class Config(object):
     TESTING = True
     CSRF_ENABLED = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS')
+    EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # JOBS = []
     SCHEDULER_JOBSTORES = {
