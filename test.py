@@ -78,7 +78,7 @@ def test_links_checked_and_followed_eightportions():
     assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip').note == 'Flat file not checked'
 
 
-def test_all_links_stripe():
+def test_link_stripe():
     user = User.query.first()
     test_checker = LinkChecker('https://stripe.com/blog', user)
-    test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
+    assert test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
