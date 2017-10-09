@@ -53,6 +53,12 @@ def is_internal_link(link, reference_url):
     return False
 
 
+def ensure_protocol(url, protocol='http'):
+    if url.startswith('http'):
+        return url
+    return protocol + '://' + url
+
+
 def prepend_if_relative(link, url, keep_anchors=False):
     """Standardize `link` by prepending it with the hostname if relative"""
     if link.startswith('/'):
@@ -110,8 +116,8 @@ def standardize_url(url):
     url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
     if url.endswith('/'):
         url = url[:-1]
-    if not url.startswith('http') and not url.startswith('/'):
-        url = 'http://' + url
+    if not url.startswith('/'):
+        url = ensure_protocol(url)
     return url
 
 

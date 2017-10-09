@@ -39,6 +39,11 @@ def test_internal_link():
     assert ~is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
 
 
+def test_internal_link_no_protocol():
+    assert is_internal_link('eightportions.com', 'https://eightportions.com')
+    assert ~is_internal_link('eightportionssdf.com', 'https://eightportions.com')
+
+
 def test_prepend_if_relative():
     assert prepend_if_relative('/', 'https://eightportions.com') == 'https://eightportions.com/'
     assert prepend_if_relative('/page', 'https://eightportions.com') == 'https://eightportions.com/page'
@@ -86,3 +91,9 @@ def test_link_stripe():
     user = User.query.first()
     test_checker = LinkChecker('https://stripe.com/blog', user)
     assert test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
+
+def test_ensure_protocol():
+    assert ensure_protocol('https://github.com/daattali') == 'https://github.com/daattali'
+    assert ensure_protocol('http://github.com/daattali') == 'http://github.com/daattali'
+    assert ensure_protocol('github.com/daattali') == 'http://github.com/daattali'
+    assert ensure_protocol('github.com/daattali', 'https') == 'https://github.com/daattali'
