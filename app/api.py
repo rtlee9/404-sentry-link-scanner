@@ -72,6 +72,15 @@ def scan(*args, **kwargs):
     with app.app_context():
         print('Scanning [{}]'.format(datetime.datetime.now().time()))
         email = kwargs.pop('email', False)
+
+        owner_id = kwargs.pop('owner_id')
+        owner = Owner.query.filter(Owner.id == owner_id).first()
+        kwargs['owner'] = owner
+
+        user_id = kwargs.pop('user_id')
+        user = User.query.filter(User.id == user_id).first()
+        kwargs['user'] = user
+
         checker = LinkChecker(*args, **kwargs)
         checker.check_all_links_and_follow()
         checker.report_errors(lambda status: status == 404)
@@ -89,7 +98,11 @@ def async_scan(url, user, owner=None):
     job_params_base = {
         'id': str(scan_record.id),
         'func': scan,
-        'args': (url, user, owner),
+        'kwargs': dict(
+            url=url,
+            user_id=user.id,
+            owner_id=owner.id,
+        ),
         'trigger': 'date',
     }
     job_params = {**job_params_base}
@@ -103,8 +116,12 @@ def scheduled_scan(url, user, cron_params, owner=None):
     job_params_base = {
         'id': str(scan_record.id),
         'func': scan,
-        'args': (url, user, owner),
-        'kwargs': {'email': True},
+        'kwargs': dict(
+            url=url,
+            user_id=user.id,
+            owner_id=owner.id,
+            email=True,
+        ),
         'trigger': 'cron',
     }
     job_params = {**job_params_base, **cron_params}
