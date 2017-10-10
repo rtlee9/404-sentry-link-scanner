@@ -19,8 +19,9 @@ class Config(object):
         'default': {'type': 'threadpool', 'max_workers': 12}
     }
     SCHEDULER_JOB_DEFAULTS = {
-        'coalesce': False,
-        'max_instances': 3
+        'coalesce': True,
+        'max_instances': 1,
+        'misfire_grace_time': 300,  # seconds after runtime
     }
     SCHEDULER_API_ENABLED = True
 
