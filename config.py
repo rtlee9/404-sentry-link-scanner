@@ -16,7 +16,7 @@ class Config(object):
         'default': SQLAlchemyJobStore(url=os.getenv('DATABASE_URL'))
     }
     SCHEDULER_EXECUTORS = {
-        'default': {'type': 'threadpool', 'max_workers': 20}
+        'default': {'type': 'threadpool', 'max_workers': 12}
     }
     SCHEDULER_JOB_DEFAULTS = {
         'coalesce': False,
