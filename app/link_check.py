@@ -7,11 +7,14 @@ from .globals import GET_TIMEOUT
 from . import app, db, scheduler
 from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
+def link_check_get(url):
+    return requests.get(url, timeout=GET_TIMEOUT, verify=False)
+
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
     if is_flat_file(url):
         return []
-    html = requests.get(url, timeout=GET_TIMEOUT).content
+    html = link_check_get(url).content
     soup = BeautifulSoup(html, 'lxml')
     return [
         a['href'] for a in soup.find_all('a')
@@ -153,7 +156,7 @@ class LinkChecker(object):
             )
         else:
             try:
-                response = requests.get(link_standardized, timeout=GET_TIMEOUT)
+                response = link_check_get(link_standardized)
                 note = None
                 linkcheck_record = LinkCheck(
                     **link_record_base,

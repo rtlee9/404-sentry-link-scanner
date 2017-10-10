@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from os import getenv
 from flask_apscheduler import APScheduler
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 
 app = Flask(__name__)
@@ -22,5 +24,8 @@ def teardown_request(exception):
         db.session.rollback()
         db.session.remove()
     db.session.remove()
+
+# disable InsecureRequestWarnings, since no longer checking SSL certs
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 from . import models, api
