@@ -100,8 +100,8 @@ def async_scan(url, user, owner=None):
         'func': scan,
         'kwargs': dict(
             url=url,
-            user_id=user.id,
-            owner_id=owner.id,
+            user_id=str(user.id),
+            owner_id=str(owner.id),
         ),
         'trigger': 'date',
     }
@@ -118,8 +118,8 @@ def scheduled_scan(url, user, cron_params, owner=None):
         'func': scan,
         'kwargs': dict(
             url=url,
-            user_id=user.id,
-            owner_id=owner.id,
+            user_id=str(user.id),
+            owner_id=str(owner.id),
             email=True,
         ),
         'trigger': 'cron',
