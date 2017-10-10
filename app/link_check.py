@@ -11,7 +11,7 @@ def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
     if is_flat_file(url):
         return []
-    html = requests.get(url).content
+    html = requests.get(url, timeout=GET_TIMEOUT).content
     soup = BeautifulSoup(html, 'lxml')
     return [
         a['href'] for a in soup.find_all('a')
