@@ -7,14 +7,12 @@ from .globals import GET_TIMEOUT
 from . import app, db, scheduler
 from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
-def link_check_get(url):
-    return requests.get(url, timeout=GET_TIMEOUT, verify=False)
 
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
     if is_flat_file(url):
         return []
-    html = link_check_get(url).content
+    html = requests.get(url, timeout=GET_TIMEOUT, verify=False).content
     soup = BeautifulSoup(html, 'lxml')
     return [
         a['href'] for a in soup.find_all('a')
@@ -159,13 +157,13 @@ class LinkChecker(object):
             )
         else:
             try:
-                response = link_check_get(link_standardized)
+                response = requests.get(link_standardized, timeout=GET_TIMEOUT, verify=False, stream=True)
                 note = None
                 linkcheck_record = LinkCheck(
                     **link_record_base,
                     response=response.status_code,
-                    text=response.text,
                 )
+                response.close()
             except Exception as exception:
                 linkcheck_record = LinkCheck(
                     **link_record_base,
@@ -173,17 +171,7 @@ class LinkChecker(object):
                 )
 
         db.session.add(linkcheck_record)
-        try:
-            db.session.commit()
-        except Exception as exception:
-            # response text contains invalid string literals
-            db.session.rollback()
-            db.session.add(LinkCheck(
-                **link_record_base,
-                response=response.status_code,
-                note=str(exception)))
-            db.session.commit()
-
+        db.session.commit()
         return linkcheck_record
 
 
