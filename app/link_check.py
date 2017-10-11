@@ -8,11 +8,13 @@ from . import app, db, scheduler
 from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
 
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
     if is_flat_file(url):
         return []
-    html = requests.get(url, timeout=GET_TIMEOUT, verify=False).content
+    html = requests.get(url, timeout=GET_TIMEOUT, verify=False, headers=headers).content
     soup = BeautifulSoup(html, 'lxml')
     return [
         a['href'] for a in soup.find_all('a')
@@ -157,7 +159,7 @@ class LinkChecker(object):
             )
         else:
             try:
-                response = requests.get(link_standardized, timeout=GET_TIMEOUT, verify=False, stream=True)
+                response = requests.get(link_standardized, timeout=GET_TIMEOUT, verify=False, stream=True, headers=headers)
                 note = None
                 linkcheck_record = LinkCheck(
                     **link_record_base,
