@@ -128,7 +128,6 @@ class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
     def __init__(self, url, user, owner=None):
         self.links_checked_and_followed = set()
-        self.links_checked = []
         self.url = standardize_url(url)
         self.job = ScanJob(
             root_url=self.url,
@@ -147,7 +146,11 @@ class LinkChecker(object):
             url=link_standardized,
             job=self.job,
         )
-        if link_standardized in self.links_checked:
+        already_checked = LinkCheck.query.\
+            filter(LinkCheck.job == self.job).\
+            filter(LinkCheck.url == link_standardized).\
+            count() > 0
+        if already_checked:
             return
         elif is_flat_file(link):
             linkcheck_record = LinkCheck(
@@ -181,7 +184,6 @@ class LinkChecker(object):
                 note=str(exception)))
             db.session.commit()
 
-        self.links_checked.append(link_standardized)
         return linkcheck_record
 
 

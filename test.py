@@ -83,7 +83,6 @@ def test_links_checked_and_followed_eightportions():
     user = User.query.first()
     test_checker = LinkChecker('https://eightportions.com/img/Taxi_pick_by_drop.gif', user)
     test_checker.check_all_links_and_follow()
-    assert test_checker.links_checked == []
     assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip').note == 'Flat file not checked'
 
 
