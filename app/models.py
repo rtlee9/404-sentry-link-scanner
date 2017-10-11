@@ -9,7 +9,7 @@ class Link(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.Text, index=True)
     source_url = db.Column(db.Text, index=True)
-    job_id = db.Column(db.Integer, db.ForeignKey('scan_job.id'))
+    job_id = db.Column(db.Integer, db.ForeignKey('scan_job.id'), nullable=False)
 
     def __repr__(self):
         return '<{} --> {}>'.format(self.source_url, self.url)
@@ -23,7 +23,7 @@ class LinkCheck(db.Model):
     response = db.Column(db.Integer, index=True)
     note = db.Column(db.Text)
     text = db.Column(db.Text)
-    job_id = db.Column(db.Integer, db.ForeignKey('scan_job.id'))
+    job_id = db.Column(db.Integer, db.ForeignKey('scan_job.id'), nullable=False)
 
     def __repr__(self):
         return '<URL {}: {}>'.format(self.url, self.response)
@@ -42,8 +42,8 @@ class ScheduledJob(db.Model):
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
     root_url = db.Column(db.Text, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
 
     def __repr__(self):
         return '<Scheduled job {} [{}/{}]>'.format(
@@ -65,11 +65,11 @@ class ScanJob(db.Model):
     """Data model representing a request and response for single link"""
     id = db.Column(db.Integer, primary_key=True)
     root_url = db.Column(db.Text, index=True)
-    start_time = db.Column(db.DateTime)
+    start_time = db.Column(db.DateTime, nullable=False)
     link_checks = db.relationship('LinkCheck', backref='job', lazy='dynamic')
     links = db.relationship('Link', backref='job', lazy='dynamic')
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
     status = db.Column(db.Text)
 
     def __repr__(self):
@@ -92,8 +92,8 @@ class PermissionedURL(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     stripe_subscription_id = db.Column(db.String(32))
     root_url = db.Column(db.Text, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey('owners.id'), nullable=False)
     __table_args__ = (UniqueConstraint(
         'root_url',
         'user_id',
@@ -148,7 +148,7 @@ class Owner(db.Model):
     scan_jobs = db.relationship('ScanJob', backref='owner', lazy='dynamic')
     scheduled_jobs = db.relationship('ScheduledJob', backref='owner', lazy='dynamic')
     permissioned_urls = db.relationship('PermissionedURL', backref='owner', lazy='dynamic')
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     __table_args__ = (UniqueConstraint(
         'email',
         'user_id',
