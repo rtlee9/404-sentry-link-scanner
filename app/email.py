@@ -2,10 +2,6 @@ import smtplib
 import argparse
 from . import app
 
-server = smtplib.SMTP('smtp.gmail.com', 587)
-server.starttls()
-server.login(app.config['EMAIL_ADDRESS'], app.config['EMAIL_PASSWORD'])
-
 message_template = """From: Ryan <{from_address}>
 To: {to_name} <{to_address}>
 Subject: {subject}
@@ -15,6 +11,9 @@ Content-type: text/html
 """
 
 def send_email(to_address, to_name, subject, message_content):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(app.config['EMAIL_ADDRESS'], app.config['EMAIL_PASSWORD'])
     message = message_template.format(
         from_address=app.config['EMAIL_ADDRESS'],
         to_address=to_address,
@@ -26,8 +25,9 @@ def send_email(to_address, to_name, subject, message_content):
     try:
        server.sendmail(app.config['EMAIL_ADDRESS'], to_address, message)
        print("Successfully sent email to {}".format(to_address))
-    except smtplib.SMTPException:
+    except smtplib.SMTPException as e:
        print("Error: unable to send email to {}".format(to_address))
+       print(e)
 
 
 if __name__ == '__main__':
