@@ -431,7 +431,7 @@ class UrlPermissions(Resource):
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user)
         return jsonify([
-            permissioned_url.root_url
+            permissioned_url.to_json()
             for permissioned_url in permissioned_urls])
 
 class Owners(Resource):
