@@ -98,6 +98,17 @@ def test_link_stripe():
     )
     assert test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
 
+def test_ssl_err_catch():
+    owner = Owner.query.first()
+    test_checker = LinkChecker(
+        'https://stripe.com/blog',
+        owner.user,
+        owner
+    )
+    r = test_checker.check_link('http://www.sysads.co.uk/2014/06/install-r-base-3-1-0-ubuntu-14-04/')
+    assert r.response is None
+    assert r.note
+
 def test_ensure_protocol():
     assert ensure_protocol('https://github.com/daattali') == 'https://github.com/daattali'
     assert ensure_protocol('http://github.com/daattali') == 'http://github.com/daattali'

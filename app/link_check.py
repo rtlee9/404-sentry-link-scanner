@@ -159,7 +159,7 @@ class LinkChecker(object):
             )
         else:
             try:
-                response = requests.get(link_standardized, timeout=GET_TIMEOUT, verify=False, stream=True, headers=headers)
+                response = requests.get(link_standardized, timeout=GET_TIMEOUT, stream=True, headers=headers)
                 note = None
                 linkcheck_record = LinkCheck(
                     **link_record_base,
