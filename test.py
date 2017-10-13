@@ -1,5 +1,5 @@
 from app.link_check import *
-from app.models import User
+from app.models import Owner
 
 def test_get_all_links_len_8P():
     assert len(get_all_links('http://eightportions.com')) > 15
@@ -80,15 +80,22 @@ def test_standardize_url():
 
 
 def test_links_checked_and_followed_eightportions():
-    user = User.query.first()
-    test_checker = LinkChecker('https://eightportions.com/img/Taxi_pick_by_drop.gif', user)
+    owner = Owner.query.first()
+    test_checker = LinkChecker(
+        'https://eightportions.com/img/Taxi_pick_by_drop.gif',
+        owner.user,
+        owner)
     test_checker.check_all_links_and_follow()
     assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip').note == 'Flat file not checked'
 
 
 def test_link_stripe():
-    user = User.query.first()
-    test_checker = LinkChecker('https://stripe.com/blog', user)
+    owner = Owner.query.first()
+    test_checker = LinkChecker(
+        'https://stripe.com/blog',
+        owner.user,
+        owner
+    )
     assert test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
 
 def test_ensure_protocol():

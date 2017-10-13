@@ -126,7 +126,7 @@ def standardize_url(url):
 
 class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
-    def __init__(self, url, user, owner=None):
+    def __init__(self, url, user, owner):
         self.links_checked_and_followed = set()
         self.url = standardize_url(url)
         self.job = ScanJob(
