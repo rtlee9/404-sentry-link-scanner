@@ -14,7 +14,13 @@ def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
     if is_flat_file(url):
         return []
-    html = requests.get(url, timeout=GET_TIMEOUT, verify=False, headers=headers).content
+    try:
+        response = requests.get(url, timeout=GET_TIMEOUT, verify=False, headers=headers)
+    except requests.exceptions.RequestException as e:
+        print('Error while getting links in {}'.format(url))
+        print(e)
+        return []
+    html = response.content
     soup = BeautifulSoup(html, 'lxml')
     return [
         a['href'] for a in soup.find_all('a')
@@ -166,7 +172,7 @@ class LinkChecker(object):
                     response=response.status_code,
                 )
                 response.close()
-            except Exception as exception:
+            except requests.exceptions.RequestException as exception:
                 linkcheck_record = LinkCheck(
                     **link_record_base,
                     note=str(exception),
