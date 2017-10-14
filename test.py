@@ -78,39 +78,39 @@ def test_standardize_url():
     assert standardize_url('#asdf') == '#asdf'
     assert standardize_url('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button'
 
-
-def test_links_checked_and_followed_eightportions():
-    owner = Owner.query.first()
-    test_checker = LinkChecker(
-        'https://eightportions.com/img/Taxi_pick_by_drop.gif',
-        owner.user,
-        owner)
-    test_checker.check_all_links_and_follow()
-    assert test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip').note == 'Flat file not checked'
-
-
-def test_link_stripe():
-    owner = Owner.query.first()
-    test_checker = LinkChecker(
-        'https://stripe.com/blog',
-        owner.user,
-        owner
-    )
-    assert test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
-
-def test_ssl_err_catch():
-    owner = Owner.query.first()
-    test_checker = LinkChecker(
-        'https://stripe.com/blog',
-        owner.user,
-        owner
-    )
-    r = test_checker.check_link('http://www.sysads.co.uk/2014/06/install-r-base-3-1-0-ubuntu-14-04/')
-    assert r.response is None
-    assert r.note
-
 def test_ensure_protocol():
     assert ensure_protocol('https://github.com/daattali') == 'https://github.com/daattali'
     assert ensure_protocol('http://github.com/daattali') == 'http://github.com/daattali'
     assert ensure_protocol('github.com/daattali') == 'http://github.com/daattali'
     assert ensure_protocol('github.com/daattali', 'https') == 'https://github.com/daattali'
+
+
+class TestLinkCheck(object):
+    def setup(self):
+        self.owner = Owner.query.first()
+        self.test_checker = LinkChecker(
+            'https://stripe.com/blog',
+            self.owner.user,
+            self.owner
+        )
+
+    def test_links_checked_and_followed_gif(self):
+        test_checker = LinkChecker(
+            'https://eightportions.com/img/Taxi_pick_by_drop.gif',
+            self.owner.user,
+            self.owner)
+        test_checker.check_all_links_and_follow()
+        assert test_checker
+
+    def test_zip_file(self):
+        r = self.test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip')
+        assert r.response is None
+        assert r.note == 'Flat file not checked'
+
+    def test_link_stripe(self):
+        assert self.test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200
+
+    def test_ssl_err_catch(self):
+        r = self.test_checker.check_link('http://www.sysads.co.uk/2014/06/install-r-base-3-1-0-ubuntu-14-04/')
+        assert r.response is None
+        assert r.note
