@@ -177,6 +177,11 @@ class LinkChecker(object):
                     **link_record_base,
                     note="Connection refused",
                 )
+            except requests.exceptions.InvalidURL:
+                linkcheck_record = LinkCheck(
+                    **link_record_base,
+                    note="Invalid URL",
+                )
             except requests.exceptions.RequestException as exception:
                 linkcheck_record = LinkCheck(
                     **link_record_base,

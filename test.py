@@ -114,6 +114,11 @@ class TestLinkCheck(object):
         assert r.response is None
         assert r.note == "SSL certificate verification failed"
 
+    def test_invalid_URL(self):
+        r = self.test_checker.check_link('http://')
+        assert r.response is None
+        assert r.note == "Invalid URL"
+
     def test_max_retries(self):
         r = self.test_checker.check_link('http://mongolab.com')
         assert r.response is None
