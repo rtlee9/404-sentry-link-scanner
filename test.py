@@ -94,7 +94,7 @@ class TestLinkCheck(object):
             self.owner
         )
 
-    def test_links_checked_and_followed_gif(self):
+    def test_flat_follow(self):
         test_checker = LinkChecker(
             'https://eightportions.com/img/Taxi_pick_by_drop.gif',
             self.owner.user,
@@ -123,3 +123,11 @@ class TestLinkCheck(object):
         r = self.test_checker.check_link('http://mongolab.com')
         assert r.response is None
         assert r.note == "Connection refused"
+
+    def test_links_checked_and_followed(self):
+        test_checker = LinkChecker(
+            'https://eightportions.com/datasets',
+            self.owner.user,
+            self.owner)
+        test_checker.check_all_links_and_follow()
+        assert len(test_checker.links_checked_and_followed) > 2
