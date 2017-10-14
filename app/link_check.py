@@ -172,6 +172,16 @@ class LinkChecker(object):
                     response=response.status_code,
                 )
                 response.close()
+            except requests.exceptions.SSLError:
+                linkcheck_record = LinkCheck(
+                    **link_record_base,
+                    note="SSL certificate verification failed",
+                )
+            except requests.exceptions.ConnectionError:
+                linkcheck_record = LinkCheck(
+                    **link_record_base,
+                    note="Connection refused",
+                )
             except requests.exceptions.RequestException as exception:
                 linkcheck_record = LinkCheck(
                     **link_record_base,

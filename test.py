@@ -113,9 +113,9 @@ class TestLinkCheck(object):
     def test_ssl_err_catch(self):
         r = self.test_checker.check_link('http://www.sysads.co.uk/2014/06/install-r-base-3-1-0-ubuntu-14-04/')
         assert r.response is None
-        assert r.note
+        assert r.note == "SSL certificate verification failed"
 
     def test_max_retries(self):
         r = self.test_checker.check_link('http://mongolab.com')
         assert r.response is None
-        assert r.note
+        assert r.note == "Connection refused"
