@@ -104,8 +104,7 @@ class TestLinkCheck(object):
 
     def test_zip_file(self):
         r = self.test_checker.check_link('https://storage.googleapis.com/recipe-box/recipes_raw.zip')
-        assert r.response is None
-        assert r.note == 'Flat file not checked'
+        assert r.response == 200
 
     def test_link_stripe(self):
         assert self.test_checker.check_link('https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2').response == 200

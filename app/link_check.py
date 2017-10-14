@@ -108,7 +108,7 @@ def is_flat_file(url):
         return False
 
     file_type = ending.split('.')[-1]
-    if file_type in ('html', 'htm', 'aspx', 'php', 'pdf', 'md', 'yml'):
+    if file_type in ('html', 'htm', 'aspx', 'php'):
         return False
 
     return True
@@ -158,11 +158,6 @@ class LinkChecker(object):
             count() > 0
         if already_checked:
             return
-        elif is_flat_file(link):
-            linkcheck_record = LinkCheck(
-                **link_record_base,
-                note='Flat file not checked'
-            )
         else:
             try:
                 response = requests.get(link_standardized, timeout=GET_TIMEOUT, stream=True, headers=headers)
