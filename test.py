@@ -1,6 +1,7 @@
 from app.link_check import *
 from app.models import Owner
 
+
 def test_get_all_links_len_8P():
     assert len(get_all_links('http://eightportions.com')) > 15
 
@@ -163,3 +164,11 @@ class TestLinkCheck(object):
             self.owner)
         test_checker.check_all_links_and_follow()
         assert len(test_checker.links_checked_and_followed) > 2
+
+    def test_long_response_siafoo(self):
+        r = self.test_checker.check_link('http://www.siafoo.net/article/52')
+        assert r.response == 200
+
+    def test_long_response_djaverages(self):
+        r = self.test_checker.check_link('http://www.djaverages.com/?go=industrial-calculation')
+        assert r.response == 200
