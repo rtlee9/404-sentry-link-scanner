@@ -44,7 +44,15 @@ def test_internal_link_relative():
 
 
 def test_standardize_url_relative():
-    assert standardize_url('../open-source/bletchley/') == '../open-source/bletchley/'
+    assert standardize_url('../open-source/bletchley') == '../open-source/bletchley'
+
+
+def test_standardize_url_relative_trailing_slash():
+    assert standardize_url('../open-source/bletchley/') == '../open-source/bletchley'
+
+
+def test_standardize_url_internal_trailing_slash():
+    assert standardize_url('/open-source/bletchley/') == '/open-source/bletchley'
 
 
 def test_internal_link_no_protocol():

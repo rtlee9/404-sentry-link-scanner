@@ -120,16 +120,15 @@ def standardize_url(url):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
     """
+    url = url.strip()
+    if url.endswith('/') and len(url) > 1:
+        url = url[:-1]
     if url.startswith('//'):
         url = 'http:' + url
     elif url.startswith('/') or url.startswith('#') or url.startswith('../'):
         return url
     url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
-    if url.endswith('/'):
-        url = url[:-1]
-    if not url.startswith('/'):
-        url = ensure_protocol(url)
-    return url
+    return ensure_protocol(url)
 
 
 class LinkChecker(object):
