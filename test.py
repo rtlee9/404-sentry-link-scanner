@@ -39,6 +39,14 @@ def test_internal_link():
     assert ~is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
 
 
+def test_internal_link_relative():
+    assert is_internal_link('../open-source/bletchley/', 'http://tech.labs.oliverwyman.com/blog/2017/09/06/gasconade-making-blog-posts-for-twitter-users/')
+
+
+def test_standardize_url_relative():
+    assert standardize_url('../open-source/bletchley/') == '../open-source/bletchley/'
+
+
 def test_internal_link_no_protocol():
     assert is_internal_link('eightportions.com', 'https://eightportions.com')
     assert ~is_internal_link('eightportionssdf.com', 'https://eightportions.com')
@@ -52,6 +60,14 @@ def test_prepend_if_relative():
     assert prepend_if_relative('#anchor1', 'http://eightportions.com', keep_anchors=True) == 'http://eightportions.com#anchor1'
     assert prepend_if_relative('/page1/subpage1', 'http://eightportions.com') == 'http://eightportions.com/page1/subpage1'
     assert prepend_if_relative('http://eightportions.com', 'http://eightportions.com') == 'http://eightportions.com'
+
+
+def test_prepend_if_relative_relative_sibling():
+    assert prepend_if_relative('../sibling-section', 'https://eightportions.com/section') == 'https://eightportions.com/sibling-section'
+
+
+def test_prepend_if_relative_relative_nephew():
+    assert prepend_if_relative('../sibling-section/child-section', 'https://eightportions.com/section') == 'https://eightportions.com/sibling-section/child-section'
 
 
 def test_is_flat_file():

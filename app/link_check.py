@@ -55,7 +55,7 @@ def points_to_self(link, url_self):
 
 def is_internal_link(link, reference_url):
     """Return true IFF `link` is a sub-component of `reference_url`"""
-    if link.startswith('/') or link.startswith('#'):
+    if link.startswith('/') or link.startswith('#') or link.startswith('../'):
         return True
     if get_base_url(link).startswith(get_base_url(reference_url)):
         return True
@@ -77,6 +77,8 @@ def prepend_if_relative(link, url, keep_anchors=False):
             return url + link
         else:
             return url
+    if link.startswith('../'):
+        return '{}/{}'.format('/'.join(url.split('/')[:-1]), '/'.join(link.split('/')[1:]))
     return link
 
 
@@ -120,7 +122,7 @@ def standardize_url(url):
     """
     if url.startswith('//'):
         url = 'http:' + url
-    elif url.startswith('/') or url.startswith('#'):
+    elif url.startswith('/') or url.startswith('#') or url.startswith('../'):
         return url
     url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
     if url.endswith('/'):
