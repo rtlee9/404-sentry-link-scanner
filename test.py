@@ -112,17 +112,17 @@ class TestLinkCheck(object):
     def test_ssl_err_catch(self):
         r = self.test_checker.check_link('http://www.sysads.co.uk/2014/06/install-r-base-3-1-0-ubuntu-14-04/')
         assert r.response is None
-        assert r.note == "SSL certificate verification failed"
+        assert r.exception == "SSLError"
 
     def test_invalid_URL(self):
         r = self.test_checker.check_link('http://')
         assert r.response is None
-        assert r.note == "Invalid URL"
+        assert r.exception == "InvalidURL"
 
     def test_max_retries(self):
         r = self.test_checker.check_link('http://mongolab.com')
         assert r.response is None
-        assert r.note == "Connection refused"
+        assert r.exception == "ConnectTimeout"
 
     def test_links_checked_and_followed(self):
         test_checker = LinkChecker(

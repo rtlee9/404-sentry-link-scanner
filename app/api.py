@@ -6,7 +6,7 @@ from requests import get
 import datetime
 from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
-from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner, Link
+from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner, Link, Exception
 from . import app, scheduler, db
 from .link_check import LinkChecker, standardize_url
 from .email import send_email
@@ -158,7 +158,17 @@ class HistoricalResults(Resource):
             response = jsonify(message='Job not found')
             response.status_code = 404
             return response
-        last_job_results = LinkCheck.query.filter(LinkCheck.job == last_job)
+        last_job_results = LinkCheck.query.\
+            filter(LinkCheck.job == last_job).\
+            outerjoin(Exception, Exception.exception == LinkCheck.exception).\
+            with_entities(
+                LinkCheck.id,
+                LinkCheck.job_id,
+                LinkCheck.note,
+                LinkCheck.response,
+                LinkCheck.url,
+                Exception.exception_description,
+            )
 
         # get sources
         link_sources = Link.query.\
@@ -173,9 +183,17 @@ class HistoricalResults(Resource):
             url = link_source.url
             source_report[url] = source_report.get(url, []) + [source_url]
 
+        # format results for consumption
+        results=[
+            {key: result[i] for i, key in enumerate(result.keys())}
+            for result in last_job_results.all()]
+        # override note with clean exception description
+        for result in results:
+            result['note'] = result.get('exception_description', result['note'])
+
         return jsonify(
             job=last_job.to_json(),
-            results=[result.to_json() for result in last_job_results.all()],
+            results=results,
             sources=source_report,
         )
 

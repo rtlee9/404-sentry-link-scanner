@@ -23,6 +23,7 @@ class LinkCheck(db.Model):
     response = db.Column(db.Integer, index=True)
     note = db.Column(db.Text)
     text = db.Column(db.Text)
+    exception = db.Column(db.String(20), index=True)
     job_id = db.Column(db.Integer, db.ForeignKey('scan_job.id'), nullable=False)
 
     def __repr__(self):
@@ -164,4 +165,20 @@ class Owner(db.Model):
             stripe_token=self.stripe_token,
             stripe_email=self.stripe_email,
             stripe_customer_id=self.stripe_customer_id,
+        )
+
+
+class Exception(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    exception = db.Column(db.Text, index=True, unique=True)
+    exception_description = db.Column(db.Text, index=True)
+
+    def __repr__(self):
+        return '<Exception {}: {}>'.format(self.exception, self.excpetion_description)
+
+    def to_json(self):
+        return dict(
+            id=self.id,
+            exception=self.exception,
+            exception_description=self.exception_description,
         )
