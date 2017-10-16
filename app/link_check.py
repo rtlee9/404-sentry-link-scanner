@@ -63,7 +63,7 @@ def is_internal_link(link, reference_url):
 
 
 def ensure_protocol(url, protocol='http'):
-    if url.startswith('http'):
+    if url.startswith('http') or url.startswith('ftp'):
         return url
     return protocol + '://' + url
 

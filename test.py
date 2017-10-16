@@ -101,6 +101,14 @@ def test_ensure_protocol():
     assert ensure_protocol('github.com/daattali', 'https') == 'https://github.com/daattali'
 
 
+def test_ensure_protocol_ftp():
+    assert ensure_protocol('ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html') == 'ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html'
+
+
+def test_standardize_url_ftp():
+    assert standardize_url('ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html') == 'ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html'
+
+
 class TestLinkCheck(object):
     def setup(self):
         self.owner = Owner.query.first()
