@@ -217,7 +217,9 @@ class HistoricalJobs(Resource):
             filter(ScanJob.owner == owner)
         if args.url:
             jobs = jobs.filter(ScanJob.root_url == standardize_url(args.url))
-        return jsonify([job.to_json() for job in jobs])
+        return jsonify([
+            job.to_json() for job in
+            jobs.order_by(ScanJob.start_time.desc()).all()])
 
 
 class LinkScan(Resource):
