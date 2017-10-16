@@ -44,7 +44,7 @@ def email_results(job):
     message = "<p>Hi,</p><p>I just finished scanning {} for potential errors, and I found {} 404 error{} I think you should review{}.</p>".format(
         '<a href="{}">{}</a>'.format(job.root_url, job.root_url),
         errors.count(),
-        's' if errors.count() > 1 else '',
+        's' if errors.count() != 1 else '',
         ':' if errors.count() > 0 else '',
     )
     if errors.count() > 0:
