@@ -44,6 +44,10 @@ def test_internal_link_relative():
     assert is_internal_link('../open-source/bletchley/', 'http://tech.labs.oliverwyman.com/blog/2017/09/06/gasconade-making-blog-posts-for-twitter-users/')
 
 
+def test_standardize_url_slash_anchor():
+    assert standardize_url('http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server/#respond') == 'http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server'
+
+
 def test_standardize_url_relative():
     assert standardize_url('../open-source/bletchley') == '../open-source/bletchley'
 
@@ -89,6 +93,13 @@ def test_is_flat_file():
     assert not is_flat_file('http://www.informit.com/articles/article.aspx?p=2314818')
 
 
+def test_remove_trailing_slash():
+    assert remove_trailing_slash('www.example.com/') == 'www.example.com'
+    assert remove_trailing_slash('http://example.com/') == 'http://example.com'
+    assert remove_trailing_slash('http://example.com') == 'http://example.com'
+    assert remove_trailing_slash('/') == '/'
+
+
 def test_standardize_url():
     assert standardize_url('https://eightportions.com ') == 'http://eightportions.com'
     assert standardize_url('https://eightportions.com') == 'http://eightportions.com'
@@ -99,6 +110,7 @@ def test_standardize_url():
     assert standardize_url('eightportions.com ') == 'http://eightportions.com'
     assert standardize_url('/') == '/'
     assert standardize_url('/asdf') == '/asdf'
+    assert standardize_url('/section/#anchor') == '/section/#anchor'
     assert standardize_url('#') == '#'
     assert standardize_url('#asdf') == '#asdf'
     assert standardize_url('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button'

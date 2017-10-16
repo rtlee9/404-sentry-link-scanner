@@ -116,19 +116,22 @@ def is_flat_file(url):
     return True
 
 
+def remove_trailing_slash(url):
+    if url.endswith('/') and len(url) > 1:
+        return url[:-1]
+    return url
+
+
 def standardize_url(url):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
     """
-    url = url.strip()
-    if url.endswith('/') and len(url) > 1:
-        url = url[:-1]
     if url.startswith('//'):
         url = 'http:' + url
     elif url.startswith('/') or url.startswith('#') or url.startswith('../'):
-        return url
+        return remove_trailing_slash(url)
     url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
-    return ensure_protocol(url)
+    return ensure_protocol(remove_trailing_slash(url))
 
 
 class LinkChecker(object):
