@@ -10,6 +10,7 @@ custom_exception_descriptions = {
     'InvalidURL': 'Invalid URL.',
     'ConnectionError': 'A connection error occurred.',
     'ReadTimeout': 'Host server timeout.',
+    'ConnectTimeout': 'Host server timeout.',
     'InvalidSchema': 'Could not read schema.',
 }
 
