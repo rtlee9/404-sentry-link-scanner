@@ -30,14 +30,14 @@ def test_points_to_self():
     assert points_to_self('https://eightportions.com', 'https://eightportions.com')
     assert points_to_self('http://eightportions.com', 'https://eightportions.com')
     assert points_to_self('http://eightpor//tions.com', 'https://eightpor//tions.com')
-    assert ~points_to_self('http://eightport//ions.com', 'https://eightpor//tions.com')
+    assert not points_to_self('http://eightport//ions.com', 'https://eightpor//tions.com')
 
 
 def test_internal_link():
     assert is_internal_link('/', 'https://eightportions.com')
     assert is_internal_link('/', 'asdfa')
     assert is_internal_link('https://eightportions.com', 'https://eightportions.com')
-    assert ~is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
+    assert not is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
 
 
 def test_internal_link_relative():
@@ -70,7 +70,7 @@ def test_standardize_url_internal_trailing_slash():
 
 def test_internal_link_no_protocol():
     assert is_internal_link('eightportions.com', 'https://eightportions.com')
-    assert ~is_internal_link('eightportionssdf.com', 'https://eightportions.com')
+    assert not is_internal_link('eightportionssdf.com', 'https://eightportions.com')
 
 
 def test_prepend_if_relative():
