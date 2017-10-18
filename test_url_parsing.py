@@ -39,6 +39,15 @@ def test_internal_link():
     assert not is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
 
 
+def test_internal_link_flat_file():
+    assert is_internal_link('/resume.pdf', 'https://eightportions.com')
+    assert is_internal_link('/files/resume.pdf', 'https://eightportions.com')
+
+
+def test_standardize_url_flat_file():
+    assert standardize_url('/files/resume.pdf') == '/files/resume.pdf'
+
+
 def test_internal_link_relative():
     assert is_internal_link('../open-source/bletchley/', 'http://tech.labs.oliverwyman.com/blog/2017/09/06/gasconade-making-blog-posts-for-twitter-users/')
 

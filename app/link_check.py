@@ -137,7 +137,7 @@ def standardize_url(url):
     # prepend scheme if necessary
     if url.startswith('//'):
         url = 'http:' + url
-    elif '.' in urlparse(url).path.split('/')[-1]:
+    elif '.' in urlparse(url).path.split('/')[-1] and not url.startswith('/'):
         url = ensure_protocol(url)
 
     # internal links
