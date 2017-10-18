@@ -80,6 +80,8 @@ def ensure_protocol(url, protocol='http'):
 
 def prepend_if_relative(link, url, keep_anchors=False):
     """Standardize `link` by prepending it with the hostname if relative"""
+    if link.startswith('javascript:void(0)'):
+        return link
     url_joined = urljoin(url, link)
     if not keep_anchors:
         u = urlparse(url_joined)

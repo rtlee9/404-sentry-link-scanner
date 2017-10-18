@@ -56,6 +56,18 @@ def test_standardize_url_slash_anchor():
     assert standardize_url('http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server/#respond') == 'http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server'
 
 
+def test_prepend_if_relative_javascript_void0():
+    assert prepend_if_relative('javascript:void(0)', 'http://anysite.com') == 'javascript:void(0)'
+
+
+def test_is_internal_link_javascript_void0():
+    assert is_internal_link('javascript:void(0)', 'http://anysite.com')
+
+
+def test_ensure_protocol_javascript_void0():
+    assert ensure_protocol('javascript:void(0)', 'http') == 'javascript:void(0)'
+
+
 def test_standardize_url_javascript_void0():
     assert standardize_url('javascript:void(0)') == 'javascript:void(0)'
 
