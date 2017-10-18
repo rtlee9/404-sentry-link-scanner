@@ -48,6 +48,14 @@ def test_standardize_url_slash_anchor():
     assert standardize_url('http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server/#respond') == 'http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server'
 
 
+def test_is_internal_link_double_slash():
+    assert not is_internal_link('//www.pinterest.com/pin/create/button/', 'http://nonnompaleo.com')
+
+
+def test_standardize_double_slash():
+    assert standardize_url('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button'
+
+
 def test_standardize_url_relative():
     assert standardize_url('../open-source/bletchley') == '../open-source/bletchley'
 
@@ -124,6 +132,10 @@ def test_ensure_protocol():
 
 def test_ensure_protocol_ftp():
     assert ensure_protocol('ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html') == 'ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html'
+
+
+def test_ensure_protocol_double_slash():
+    assert ensure_protocol('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button/'
 
 
 def test_standardize_url_ftp():

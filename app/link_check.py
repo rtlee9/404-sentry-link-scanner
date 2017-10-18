@@ -55,6 +55,8 @@ def points_to_self(link, url_self):
 
 def is_internal_link(link, reference_url):
     """Return true IFF `link` is a sub-component of `reference_url`"""
+    if link.startswith('//'):
+        return False
     if link.startswith('/') or link.startswith('#') or link.startswith('../'):
         return True
     if get_base_url(link).startswith(get_base_url(reference_url)):
@@ -65,6 +67,8 @@ def is_internal_link(link, reference_url):
 def ensure_protocol(url, protocol='http'):
     if url.startswith('http') or url.startswith('ftp'):
         return url
+    if url.startswith('//'):
+        return protocol + ':' + url
     return protocol + '://' + url
 
 
