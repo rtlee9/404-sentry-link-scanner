@@ -162,6 +162,7 @@ class HistoricalResults(Resource):
             filter(LinkCheck.job == last_job).\
             outerjoin(Exception, Exception.exception == LinkCheck.exception).\
             with_entities(
+                LinkCheck,  # For severity assessment
                 LinkCheck.id,
                 LinkCheck.job_id,
                 LinkCheck.note,
@@ -185,7 +186,10 @@ class HistoricalResults(Resource):
 
         # format results for consumption
         results=[
-            {key: result[i] for i, key in enumerate(result.keys())}
+            dict(
+                severity=assess_severity(result[0]),
+                **{key: result[i + 1] for i, key in enumerate(result.keys()[1:])}
+            )
             for result in last_job_results.all()]
         # override note with clean exception description
         for result in results:
@@ -196,6 +200,22 @@ class HistoricalResults(Resource):
             results=results,
             sources=source_report,
         )
+
+
+def assess_severity(link_check):
+    """Assess the severity of a link check on a 1-3 scale.
+    """
+    if link_check.response in (404, 400):
+        return 3
+    if link_check.exception == 'ConnectionError':
+        return 3
+    if link_check.response in (403,):
+        return 2
+    if link_check.exception == 'SSLError':
+        return 2
+    if link_check.response != 200:
+        return 1
+    return 0
 
 
 class HistoricalJobs(Resource):
