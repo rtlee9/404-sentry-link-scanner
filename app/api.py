@@ -174,7 +174,7 @@ class HistoricalResults(Resource):
         link_sources = Link.query.\
             filter(Link.url.in_(last_job_results.with_entities(LinkCheck.url))).\
             filter(Link.job == last_job).\
-            with_entities(Link.url, Link.source_url).all()
+            with_entities(Link.url, Link.source_url).distinct()
 
         # format sources > error mapping
         source_report = {}
