@@ -1,6 +1,7 @@
 """Recursive link checker"""
 import argparse
 import requests
+from requests.compat import urljoin, urlparse
 from bs4 import BeautifulSoup
 import datetime
 from .globals import GET_TIMEOUT
@@ -9,6 +10,7 @@ from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+
 
 def get_all_links(url):
     """Get all hrefs in the HTML of a given URL"""
@@ -30,7 +32,8 @@ def get_all_links(url):
 def get_base_url(url):
     """Strip the scheme and trailing slashes from the URL"""
     if (url.startswith('http')) and ('//' in url):
-        url_root = '//'.join(url.split('//')[1:])
+        u = urlparse(url)
+        url_root = u.netloc + u.path
     else:
         url_root = url
     url_stripped = url_root[:-1] if url_root.endswith('/') else url_root
@@ -39,9 +42,8 @@ def get_base_url(url):
 
 def get_hostname(url):
     """strip the path and query string from the url"""
-    url_root = '/'.join(url.split('/')[:3])
-    url_stripped = url_root[:-1] if url_root.endswith('/') else url_root
-    return url_stripped
+    u = urlparse(url)
+    return '{}://{}'.format(u.scheme, u.hostname)
 
 
 def points_to_self(link, url_self):
@@ -67,7 +69,7 @@ def is_internal_link(link, reference_url):
 
 
 def ensure_protocol(url, protocol='http'):
-    if url.startswith('http') or url.startswith('ftp'):
+    if urlparse(url).scheme:
         return url
     if url.startswith('javascript:void(0)'):
         return url
@@ -78,18 +80,11 @@ def ensure_protocol(url, protocol='http'):
 
 def prepend_if_relative(link, url, keep_anchors=False):
     """Standardize `link` by prepending it with the hostname if relative"""
-    if link.startswith('/'):
-        return get_hostname(url) + link
-    if link.startswith('#'):
-        if keep_anchors:
-            return url + link
-        else:
-            return url
-    if link.startswith('../'):
-        return '{}/{}'.format('/'.join(url.split('/')[:-1]), '/'.join(link.split('/')[1:]))
-    if '.' not in link:
-        return '{}/{}'.format(get_hostname(url), link)
-    return link
+    url_joined = urljoin(url, link)
+    if not keep_anchors:
+        u = urlparse(url_joined)
+        return '{}://{}{}'.format(u.scheme, u.netloc, u.path)
+    return url_joined
 
 
 def group_links_internal_external(links, url):
@@ -109,17 +104,15 @@ def group_links_internal_external(links, url):
 def is_flat_file(url):
     """Return True if `url` points to a (potentially large) flat file"""
     # strip url args:
-    url = url.split('?')[0].split('#')[-1]
-
-    splits = url.split('/')
-    if len(splits) <= 3:
+    u = urlparse(url)
+    url = '{}://{}{}'.format(u.scheme, u.netloc, u.path)
+    if not u.path:
         return False
 
-    ending = splits[-1]
-    if '.' not in ending:
+    if '.' not in u.path:
         return False
 
-    file_type = ending.split('.')[-1]
+    file_type = u.path.split('.')[-1]
     if file_type in ('html', 'htm', 'aspx', 'php'):
         return False
 
@@ -136,12 +129,27 @@ def standardize_url(url):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
     """
+
+    # special case
+    if url.startswith('javascript:void(0)'):
+        return url
+
+    # prepend scheme if necessary
     if url.startswith('//'):
         url = 'http:' + url
-    elif url.startswith('/') or url.startswith('#') or url.startswith('../'):
+    elif '.' in urlparse(url).path.split('/')[-1]:
+        url = ensure_protocol(url)
+
+    # internal links
+    u_dummy = urlparse(urljoin('http://dummy.com/dummy_path', url))
+    if u_dummy.netloc == 'dummy.com':
         return remove_trailing_slash(url)
-    url = url.strip().split('#')[0].split('?')[0].replace('https://', 'http://')
-    return ensure_protocol(remove_trailing_slash(url))
+
+    # external links
+    u = urlparse(ensure_protocol(url))
+    scheme = u.scheme.replace('https', 'http')
+    url = '{}://{}{}'.format(scheme, u.netloc, u.path).strip()
+    return remove_trailing_slash(url)
 
 
 class LinkChecker(object):
