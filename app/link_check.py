@@ -61,6 +61,8 @@ def is_internal_link(link, reference_url):
         return True
     if get_base_url(link).startswith(get_base_url(reference_url)):
         return True
+    if '.' not in link:
+        return True
     return False
 
 
@@ -85,6 +87,8 @@ def prepend_if_relative(link, url, keep_anchors=False):
             return url
     if link.startswith('../'):
         return '{}/{}'.format('/'.join(url.split('/')[:-1]), '/'.join(link.split('/')[1:]))
+    if '.' not in link:
+        return '{}/{}'.format(get_hostname(url), link)
     return link
 
 

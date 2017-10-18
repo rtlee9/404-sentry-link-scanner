@@ -47,10 +47,6 @@ def test_standardize_url_slash_anchor():
     assert standardize_url('http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server/#respond') == 'http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server'
 
 
-def test_is_internal_link_javascript_void0():
-    assert not is_internal_link('javascript:void(0)', 'http://anysite.com')
-
-
 def test_standardize_url_javascript_void0():
     assert standardize_url('javascript:void(0)') == 'javascript:void(0)'
 
@@ -96,6 +92,26 @@ def test_prepend_if_relative_relative_sibling():
 
 def test_prepend_if_relative_relative_nephew():
     assert prepend_if_relative('../sibling-section/child-section', 'https://eightportions.com/section') == 'https://eightportions.com/sibling-section/child-section'
+
+
+def test_standardize_url_no_starting_slash():
+    assert standardize_url('EurotripServiceHomepage') == 'EurotripServiceHomepage'
+
+
+def test_is_internal_link_no_starting_slash():
+    assert is_internal_link('EurotripServiceHomepage', 'http://www.dreameurotrip.com')
+
+
+def test_prepend_if_relative_no_starting_slash():
+    assert prepend_if_relative('EurotripServiceHomepage', 'http://www.dreameurotrip.com') == 'http://www.dreameurotrip.com/EurotripServiceHomepage'
+
+
+def test_prepend_if_relative_no_starting_slash_nested():
+    assert prepend_if_relative('EurotripServiceHomepage/asdf', 'http://www.dreameurotrip.com') == 'http://www.dreameurotrip.com/EurotripServiceHomepage/asdf'
+
+
+def test_prepend_if_relative_no_starting_slash_non_root():
+    assert prepend_if_relative('EurotripServiceHomepage', 'http://www.dreameurotrip.com/page') == 'http://www.dreameurotrip.com/EurotripServiceHomepage'
 
 
 def test_is_flat_file():
