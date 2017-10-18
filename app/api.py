@@ -213,6 +213,8 @@ def assess_severity(link_check):
         return 2
     if link_check.exception == 'SSLError':
         return 2
+    if link_check.url == 'javascript:void(0)':
+        return 0
     if link_check.response != 200:
         return 1
     return 0

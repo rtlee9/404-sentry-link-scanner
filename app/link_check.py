@@ -67,6 +67,8 @@ def is_internal_link(link, reference_url):
 def ensure_protocol(url, protocol='http'):
     if url.startswith('http') or url.startswith('ftp'):
         return url
+    if url.startswith('javascript:void(0)'):
+        return url
     if url.startswith('//'):
         return protocol + ':' + url
     return protocol + '://' + url

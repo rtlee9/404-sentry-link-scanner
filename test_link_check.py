@@ -56,4 +56,3 @@ class TestLinkCheck(object):
     def test_long_response_djaverages(self):
         r = self.test_checker.check_link('http://www.djaverages.com/?go=industrial-calculation')
         assert r.response == 200
-

@@ -47,6 +47,14 @@ def test_standardize_url_slash_anchor():
     assert standardize_url('http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server/#respond') == 'http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server'
 
 
+def test_is_internal_link_javascript_void0():
+    assert not is_internal_link('javascript:void(0)', 'http://anysite.com')
+
+
+def test_standardize_url_javascript_void0():
+    assert standardize_url('javascript:void(0)') == 'javascript:void(0)'
+
+
 def test_is_internal_link_double_slash():
     assert not is_internal_link('//www.pinterest.com/pin/create/button/', 'http://nonnompaleo.com')
 
