@@ -24,7 +24,12 @@ def verify_password(username, password):
 
 
 def email_results(job):
-    job_results = LinkCheck.query.filter(LinkCheck.job == job)
+    job_results = LinkCheck.query.filter(LinkCheck.job == job).\
+        outerjoin(Exception, Exception.exception == LinkCheck.exception).\
+        with_entities(
+            LinkCheck,  # For severity assessment
+            Exception,
+        )
 
     # get sources
     link_sources = Link.query.\
@@ -32,26 +37,23 @@ def email_results(job):
         filter(Link.job == job).\
         with_entities(Link.url, Link.source_url).all()
 
-    # format sources > error mapping
-    source_report = {}
-    for link_source in link_sources:
-        source_url = link_source.source_url
-        url = link_source.url
-        source_report[url] = source_report.get(url, []) + [source_url]
-
     # generate email message body
-    errors = job_results.filter(LinkCheck.response == 404)
-    message = "<p>Hi,</p><p>I just finished scanning {} for potential errors, and I found {} 404 error{} I think you should review{}.</p>".format(
+    # assess_severity
+    errors = [result for result in job_results.all() if assess_severity(result.LinkCheck) > 0]
+    n_errors = len(errors)
+    message = "<p>Hi,</p><p>I just finished scanning {} for potential errors, and I found {} potential error{} I think you should review{}.</p>".format(
         '<a href="{}">{}</a>'.format(job.root_url, job.root_url),
-        errors.count(),
-        's' if errors.count() != 1 else '',
-        ':' if errors.count() > 0 else '',
+        n_errors,
+        's' if n_errors != 1 else '',
+        ':' if n_errors > 0 else '',
     )
-    if errors.count() > 0:
+
+    if n_errors > 0:
         message += '<ul>'
-        for error in errors.all():
-            message += '<li>{} (linked to from {} pages)</li>'.format(
-                error.url, len(source_report.get(error.url)))
+        for error in errors:
+            error_description = str(error.LinkCheck.response) + ' response' if error.LinkCheck.response else error.Exception.exception_description
+            message += '<li>{} [{}]</li>'.format(
+                error.LinkCheck.url, error_description)
         message += '</ul>'
     message += '<p>The full results for this scan can be viewed at <a href="https://404sentry.com/dashboard">404sentry.com</a>.</p><p>As always, please don\'t hesitate to respond to this email with any questions, comments or concerns.</p><p>Thanks,<br>404 Sentry</p>'
 
@@ -63,9 +65,10 @@ def email_results(job):
     )
 
     return dict(
-        job=job.to_json(),
-        results=[result.to_json() for result in job_results.all()],
-        sources=source_report,
+        to_address=job.owner.stripe_email,
+        to_name="",
+        subject="Your 404 Sentry scan results for {}".format(job.root_url),
+        message_content=message,
     )
 
 def scan(*args, **kwargs):
