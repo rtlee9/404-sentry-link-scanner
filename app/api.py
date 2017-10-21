@@ -51,7 +51,12 @@ def email_results(job):
     if n_errors > 0:
         message += '<ul>'
         for error in errors:
-            error_description = str(error.LinkCheck.response) + ' response' if error.LinkCheck.response else error.Exception.exception_description
+            if error.LinkCheck.response:
+                error_description = str(error.LinkCheck.response) + ' response'
+            else:
+                error_description = error.Exception.exception_description
+                if error_description.endswith('.'):
+                    error_description = error_description[:-1]
             message += '<li>{} [{}]</li>'.format(
                 error.LinkCheck.url, error_description)
         message += '</ul>'
