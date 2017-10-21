@@ -23,7 +23,7 @@ class TestAssessSeverity(object):
         link_check = LinkCheck.query.filter(LinkCheck.response == 999).first()
         assert assess_severity(link_check) == 0
 
-    def test_assess_javascript_void0(self):
+    def test_assess_severity_javascript_void0(self):
         link_check = LinkCheck.query.filter(LinkCheck.url == 'javascript:void(0)').first()
         assert assess_severity(link_check) == 0
 
