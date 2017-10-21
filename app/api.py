@@ -41,7 +41,7 @@ def email_results(job):
     # assess_severity
     errors = [result for result in job_results.all() if assess_severity(result.LinkCheck) > 0]
     n_errors = len(errors)
-    message = "<p>Hi,</p><p>I just finished scanning {} for potential errors, and I found {} potential error{} I think you should review{}.</p>".format(
+    message = "<p>Hi,</p><p>I just finished scanning {}, and I found {} potential error{} I think you should review{}.</p>".format(
         '<a href="{}">{}</a>'.format(job.root_url, job.root_url),
         n_errors,
         's' if n_errors != 1 else '',
