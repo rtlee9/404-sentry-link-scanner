@@ -26,3 +26,7 @@ class TestAssessSeverity(object):
     def test_assess_javascript_void0(self):
         link_check = LinkCheck.query.filter(LinkCheck.url == 'javascript:void(0)').first()
         assert assess_severity(link_check) == 0
+
+    def test_assess_severity_InvalidSchema(self):
+        link_check = LinkCheck.query.filter(LinkCheck.exception == 'InvalidSchema').first()
+        assert assess_severity(link_check) == 0
