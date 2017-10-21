@@ -152,6 +152,21 @@ def test_remove_trailing_slash():
     assert remove_trailing_slash('/') == '/'
 
 
+def test_standardize_descheme_url():
+    assert standardize_descheme_url('https://eightportions.com') == 'eightportions.com'
+    assert standardize_descheme_url('http://eightportions.com') == 'eightportions.com'
+    assert standardize_descheme_url('ftp://eightportions.com') == 'eightportions.com'
+    assert standardize_descheme_url('eightportions.com') == 'eightportions.com'
+
+
+def test_standardize_descheme_url_strip():
+    assert standardize_descheme_url('https://eightportions.com ') == 'eightportions.com'
+
+
+def test_standardize_descheme_url_endswith_slash():
+    assert standardize_descheme_url('https://eightportions.com/') == 'eightportions.com'
+
+
 def test_standardize_url():
     assert standardize_url('https://eightportions.com ') == 'http://eightportions.com'
     assert standardize_url('https://eightportions.com') == 'http://eightportions.com'

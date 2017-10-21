@@ -153,6 +153,11 @@ def standardize_url(url):
     url = '{}://{}{}'.format(scheme, u.netloc, u.path).strip()
     return remove_trailing_slash(url)
 
+def standardize_descheme_url(url):
+    url_standardized = standardize_url(url)
+    u = urlparse(ensure_protocol(url_standardized))
+    return '{}{}'.format(u.netloc, u.path)
+
 
 class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
@@ -160,7 +165,7 @@ class LinkChecker(object):
         self.links_checked_and_followed = set()
         self.url = standardize_url(url)
         self.job = ScanJob(
-            root_url=self.url,
+            root_url=standardize_descheme_url(self.url),
             start_time=datetime.datetime.utcnow(),
             user=user,
             status='in progress',

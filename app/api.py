@@ -8,7 +8,7 @@ from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
 from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner, Link, Exception
 from . import app, scheduler, db
-from .link_check import LinkChecker, standardize_url
+from .link_check import LinkChecker, standardize_descheme_url
 from .email import send_email
 
 
@@ -159,7 +159,7 @@ class HistoricalResults(Resource):
             filter(ScanJob.user == g.user).\
             filter(ScanJob.owner == owner)
         if args.url:
-            last_job_id = last_job_id.filter(ScanJob.root_url == standardize_url(args.url))
+            last_job_id = last_job_id.filter(ScanJob.root_url == standardize_descheme_url(args.url))
         try:
             last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
         except IndexError:
@@ -250,7 +250,7 @@ class HistoricalJobs(Resource):
             filter(ScanJob.user == g.user).\
             filter(ScanJob.owner == owner)
         if args.url:
-            jobs = jobs.filter(ScanJob.root_url == standardize_url(args.url))
+            jobs = jobs.filter(ScanJob.root_url == standardize_descheme_url(args.url))
         return jsonify([
             job.to_json() for job in
             jobs.order_by(ScanJob.start_time.desc()).all()])
@@ -270,7 +270,7 @@ class LinkScan(Resource):
         owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
-            filter(PermissionedURL.root_url == standardize_url(args.url)).\
+            filter(PermissionedURL.root_url == standardize_descheme_url(args.url)).\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user).count()
         if permissioned == 0:
@@ -278,7 +278,7 @@ class LinkScan(Resource):
                 message='User-owner is not permissioned for this website')
             response.status_code = 403
             return response
-        job, _ = async_scan(standardize_url(args.url), g.user, owner)
+        job, _ = async_scan(standardize_descheme_url(args.url), g.user, owner)
         return jsonify(job.to_json())
 
 class LinkScanJob(Resource):
@@ -296,7 +296,7 @@ class LinkScanJob(Resource):
         cron_params = request.get_json()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
-            filter(PermissionedURL.root_url == standardize_url(args.url)).\
+            filter(PermissionedURL.root_url == standardize_descheme_url(args.url)).\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user).count()
         if permissioned == 0:
@@ -305,7 +305,7 @@ class LinkScanJob(Resource):
             response.status_code = 403
             return response
         try:
-            job = scheduled_scan(standardize_url(args.url), g.user, cron_params, owner)
+            job = scheduled_scan(standardize_descheme_url(args.url), g.user, cron_params, owner)
             return jsonify(job_id=job.id)
         except ConflictingIdError:
             response = jsonify(message='This user already has a scheduled job for the root URL provided.')
@@ -329,7 +329,7 @@ class LinkScanJob(Resource):
             filter(ScheduledJob.user == g.user).\
             filter(ScheduledJob.owner == owner)
         if args.url:
-            jobs = jobs.filter(ScheduledJob.root_url == standardize_url(args.url))
+            jobs = jobs.filter(ScheduledJob.root_url == standardize_descheme_url(args.url))
         scheduled_jobs = filter(
             lambda x: x is not None,
             [scheduler.get_job(str(job.id)) for job in jobs])
@@ -359,7 +359,7 @@ class LinkScanJob(Resource):
             filter(ScheduledJob.user == g.user).\
             filter(ScheduledJob.owner == owner)
         if args.url:
-            jobs = jobs.filter(ScheduledJob.root_url == standardize_url(args.url))
+            jobs = jobs.filter(ScheduledJob.root_url == standardize_descheme_url(args.url))
         scheduled_jobs_summary = []
         for job in jobs:
             scheduled_job = scheduler.get_job(str(job.id))
@@ -391,7 +391,7 @@ class UrlPermissions(Resource):
         owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         try:
             permissioned_url = PermissionedURL(
-                root_url=standardize_url(args.url),
+                root_url=standardize_descheme_url(args.url),
                 user=g.user,
                 owner=owner,
                 stripe_subscription_id=args.stripe_subscription_id,
@@ -402,7 +402,7 @@ class UrlPermissions(Resource):
         except IntegrityError:
             db.session.rollback()
             permissioned_url = PermissionedURL.query.\
-                filter(PermissionedURL.root_url == standardize_url(args.url)).\
+                filter(PermissionedURL.root_url == standardize_descheme_url(args.url)).\
                 filter(PermissionedURL.user == g.user).\
                 filter(PermissionedURL.owner == owner).first()
             response = jsonify(
@@ -453,7 +453,7 @@ class UrlPermissions(Resource):
             return response
         owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         depermissioned_urls = PermissionedURL.query.\
-            filter(PermissionedURL.root_url == standardize_url(args.url)).\
+            filter(PermissionedURL.root_url == standardize_descheme_url(args.url)).\
             filter(PermissionedURL.user == g.user).\
             filter(PermissionedURL.owner == owner).all()
         if len(depermissioned_urls) == 0:
