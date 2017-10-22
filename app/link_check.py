@@ -163,7 +163,7 @@ class LinkChecker(object):
     """Link checker module, initialized with the root URL of the webiste to scan"""
     def __init__(self, url, user, owner):
         self.links_checked_and_followed = set()
-        self.url = standardize_url(url)
+        self.url = ensure_protocol(standardize_url(url))
         self.job = ScanJob(
             root_url=standardize_descheme_url(self.url),
             start_time=datetime.datetime.utcnow(),

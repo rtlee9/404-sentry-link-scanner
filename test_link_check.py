@@ -41,9 +41,17 @@ class TestLinkCheck(object):
         assert r.response is None
         assert r.exception == "ConnectTimeout"
 
-    def test_links_checked_and_followed(self):
+    def test_links_checked_and_followed_eightportions(self):
         test_checker = LinkChecker(
             'https://eightportions.com/datasets',
+            self.owner.user,
+            self.owner)
+        test_checker.check_all_links_and_follow()
+        assert len(test_checker.links_checked_and_followed) > 2
+
+    def test_links_checked_and_followed_noschema(self):
+        test_checker = LinkChecker(
+            'www.lemonade.com/blog',
             self.owner.user,
             self.owner)
         test_checker.check_all_links_and_follow()
