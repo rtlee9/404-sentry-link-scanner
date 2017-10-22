@@ -71,7 +71,7 @@ def is_internal_link(link, reference_url):
 def ensure_protocol(url, protocol='http'):
     if urlparse(url).scheme:
         return url
-    if url.startswith('javascript:void(0)'):
+    if url.startswith('javascript:'):
         return url
     if url.startswith('//'):
         return protocol + ':' + url
@@ -80,7 +80,7 @@ def ensure_protocol(url, protocol='http'):
 
 def prepend_if_relative(link, url, keep_anchors=False):
     """Standardize `link` by prepending it with the hostname if relative"""
-    if link.startswith('javascript:void(0)'):
+    if link.startswith('javascript:'):
         return link
     url_joined = urljoin(url, link)
     if not keep_anchors:
@@ -133,7 +133,7 @@ def standardize_url(url):
     """
 
     # special case
-    if url.startswith('javascript:void(0)'):
+    if url.startswith('javascript:'):
         return url
 
     # prepend scheme if necessary
