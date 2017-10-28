@@ -1,11 +1,12 @@
 from flask import request, g
 from flask.json import jsonify
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource, reqparse, inputs
 from flask_httpauth import HTTPBasicAuth
 from requests import get
 import datetime
 from apscheduler.jobstores.base import ConflictingIdError
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from .models import User, ScanJob, LinkCheck, ScheduledJob, PermissionedURL, Owner, Link, Exception
 from . import app, scheduler, db
 from .link_check import LinkChecker, standardize_descheme_url
@@ -151,6 +152,7 @@ class HistoricalResults(Resource):
         parser.add_argument('owner_id', type=str, help='Scan job owner ID')
         parser.add_argument('limit', type=int, default=100, help='Number of records to fetch')
         parser.add_argument('offset', type=int, default=0, help='First record to fetch')
+        parser.add_argument('filter_exceptions', type=inputs.boolean, default=True, help='First exceptions only')
         args = parser.parse_args()
         if (not args.owner_id) or (not g.user.admin):
             owner_id = g.user.username
@@ -169,10 +171,23 @@ class HistoricalResults(Resource):
             response.status_code = 404
             return response
         last_job_results = LinkCheck.query.\
-            filter(LinkCheck.job == last_job).\
-            outerjoin(Exception, Exception.exception == LinkCheck.exception).\
+            filter(LinkCheck.job == last_job)
+
+        # filter exceptions
+        if args.filter_exceptions:
+            last_job_results = last_job_results.filter(or_(LinkCheck.response != 200, LinkCheck.exception != None))
+        else:
+            last_job_results = last_job_results.filter(LinkCheck.response == 200).filter(LinkCheck.exception == None)
+
+        last_job_results = last_job_results.\
+            outerjoin(Exception, Exception.exception == LinkCheck.exception)
+
+        # limit results
+        if args.limit:
+            last_job_results = last_job_results.limit(args.limit)
+
+        last_job_results = last_job_results.\
             offset(args.offset).\
-            limit(args.limit).\
             with_entities(
                 LinkCheck,  # For severity assessment
                 LinkCheck.id,
