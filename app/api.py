@@ -149,6 +149,8 @@ class HistoricalResults(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner ID')
+        parser.add_argument('limit', type=int, default=100, help='Number of records to fetch')
+        parser.add_argument('offset', type=int, default=0, help='First record to fetch')
         args = parser.parse_args()
         if (not args.owner_id) or (not g.user.admin):
             owner_id = g.user.username
@@ -169,6 +171,8 @@ class HistoricalResults(Resource):
         last_job_results = LinkCheck.query.\
             filter(LinkCheck.job == last_job).\
             outerjoin(Exception, Exception.exception == LinkCheck.exception).\
+            offset(args.offset).\
+            limit(args.limit).\
             with_entities(
                 LinkCheck,  # For severity assessment
                 LinkCheck.id,
