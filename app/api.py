@@ -175,7 +175,7 @@ class HistoricalResults(Resource):
         # filter exceptions
         if args.filter_exceptions:
             last_job_results = last_job_results.filter(LinkCheck.severity > 0).\
-                order_by(LinkCheck.severity)
+                order_by(LinkCheck.severity.desc())
         else:
             last_job_results = last_job_results.filter(LinkCheck.severity == 0)
 
@@ -212,7 +212,7 @@ class HistoricalResults(Resource):
             source_report[url] = source_report.get(url, []) + [source_url]
 
         # format results for consumption
-        results=[
+        results = [
             dict(
                 severity=result[0].severity,
                 **{key: result[i + 1] for i, key in enumerate(result.keys()[1:])}
