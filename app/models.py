@@ -55,7 +55,7 @@ class LinkCheck(db.Model):
             return 0
         if self.exception == 'InvalidSchema':
             return 0
-        if self.url == 'javascript:void(0)':  # TODO: include all javascript
+        if self.url.startswith('javascript'):
             return 0
         if self.response != 200:
             return 1
@@ -73,7 +73,7 @@ class LinkCheck(db.Model):
                 (cls.exception == 'SSLError', 2),
                 (and_(cls.response == '999', cls.url.contains('linkedin.com')), 0),
                 (cls.exception == 'InvalidSchema', 0),
-                (cls.url == 'javascript:void(0)', 2),  # TODO: include all javascript
+                (cls.url.like('javascript%'), 2),
                 (cls.exception != None, 1),
                 (cls.response != '200', 1),
             ],
