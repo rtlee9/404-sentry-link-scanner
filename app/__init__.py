@@ -3,12 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from os import getenv
 from flask_apscheduler import APScheduler
+from flask_cors import CORS
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 
 app = Flask(__name__)
 app.config.from_object('config.{}'.format(getenv('CONFIG')))
+
+# allow CORS for all domains on all routes
+CORS(app)
 
 # APScheduler configuration
 scheduler = APScheduler()

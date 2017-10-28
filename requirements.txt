@@ -16,3 +16,4 @@ Flask-HTTPAuth==3.2.3
 gunicorn==19.7.1
 Flask-APScheduler==1.7.0
 stripe==1.66.0
+Flask-Cors==3.0.3
