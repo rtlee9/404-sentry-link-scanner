@@ -39,8 +39,7 @@ def email_results(job):
         with_entities(Link.url, Link.source_url).all()
 
     # generate email message body
-    # assess_severity
-    errors = [result for result in job_results.all() if assess_severity(result.LinkCheck) > 0]
+    errors = [result for result in job_results.all() if result.LinkCheck.severity > 0]
     n_errors = len(errors)
     message = "<p>Hi,</p><p>I just finished scanning {}, and I found {} potential error{} I think you should review{}</p>".format(
         '<a href="{}">{}</a>'.format(job.root_url, job.root_url),
@@ -175,9 +174,10 @@ class HistoricalResults(Resource):
 
         # filter exceptions
         if args.filter_exceptions:
-            last_job_results = last_job_results.filter(or_(LinkCheck.response != 200, LinkCheck.exception != None))
+            last_job_results = last_job_results.filter(LinkCheck.severity > 0).\
+                order_by(LinkCheck.severity)
         else:
-            last_job_results = last_job_results.filter(LinkCheck.response == 200).filter(LinkCheck.exception == None)
+            last_job_results = last_job_results.filter(LinkCheck.severity == 0)
 
         last_job_results = last_job_results.\
             outerjoin(Exception, Exception.exception == LinkCheck.exception)
@@ -214,7 +214,7 @@ class HistoricalResults(Resource):
         # format results for consumption
         results=[
             dict(
-                severity=assess_severity(result[0]),
+                severity=result[0].severity,
                 **{key: result[i + 1] for i, key in enumerate(result.keys()[1:])}
             )
             for result in last_job_results.all()]
@@ -227,28 +227,6 @@ class HistoricalResults(Resource):
             results=results,
             sources=source_report,
         )
-
-
-def assess_severity(link_check):
-    """Assess the severity of a link check on a 1-3 scale.
-    """
-    if link_check.response in (404, 400):
-        return 3
-    if link_check.exception == 'ConnectionError':
-        return 3
-    if link_check.response in (403,):
-        return 2
-    if link_check.exception == 'SSLError':
-        return 2
-    if link_check.response == 999 and 'linkedin.com' in link_check.url:
-        return 0
-    if link_check.exception == 'InvalidSchema':
-        return 0
-    if link_check.url == 'javascript:void(0)':
-        return 0
-    if link_check.response != 200:
-        return 1
-    return 0
 
 
 class HistoricalJobs(Resource):
@@ -598,6 +576,7 @@ class Owners(Resource):
             response = jsonify(message='Owner does not exist')
             response.status_code = 404
             return response
+
 
 api = Api(app)
 api.add_resource(LinkScan, "/link-scan")

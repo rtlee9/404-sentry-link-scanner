@@ -1,7 +1,8 @@
 """Data models for link check scans"""
 from . import db
 from passlib.apps import custom_app_context as pwd_context
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, case, and_
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class Link(db.Model):
@@ -38,6 +39,46 @@ class LinkCheck(db.Model):
             job_id=self.job_id,
         )
 
+    @hybrid_property
+    def severity(self):
+        """Assess the severity of a link check on a 1-3 scale.
+        """
+        if self.response in (404, 400):
+            return 3
+        if self.exception == 'ConnectionError':
+            return 3
+        if self.response in (403,):
+            return 2
+        if self.exception == 'SSLError':
+            return 2
+        if self.response == 999 and 'linkedin.com' in self.url:
+            return 0
+        if self.exception == 'InvalidSchema':
+            return 0
+        if self.url == 'javascript:void(0)':  # TODO: include all javascript
+            return 0
+        if self.response != 200:
+            return 1
+        return 0
+
+    @severity.expression
+    def severity(cls):
+        """Assess the severity of a link check on a 1-3 scale.
+        """
+        return case(
+            [
+                (cls.response.in_(('404', '400')), 3),
+                (cls.exception == 'ConnectionError', 3),
+                (cls.response == '403', 2),
+                (cls.exception == 'SSLError', 2),
+                (and_(cls.response == '999', cls.url.contains('linkedin.com')), 0),
+                (cls.exception == 'InvalidSchema', 0),
+                (cls.url == 'javascript:void(0)', 2),  # TODO: include all javascript
+                (cls.exception != None, 1),
+                (cls.response != '200', 1),
+            ],
+            else_=0
+        )
 
 class ScheduledJob(db.Model):
     """Data model representing a request and response for single link"""
