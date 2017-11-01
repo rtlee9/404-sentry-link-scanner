@@ -169,7 +169,8 @@ class HistoricalResults(Resource):
             last_job_results = last_job_results.filter(LinkCheck.severity == 0)
 
         last_job_results = last_job_results.\
-            outerjoin(Exception, Exception.exception == LinkCheck.exception)
+            outerjoin(Exception, Exception.exception == LinkCheck.exception).\
+            order_by(LinkCheck.id)
 
         # limit results
         if args.limit:
