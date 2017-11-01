@@ -195,7 +195,7 @@ class HistoricalResults(Resource):
 
         # format sources > error mapping
         source_report = {}
-        for link_source in link_sources:
+        for link_source in link_sources.all():
             source_url = link_source.source_url
             url = link_source.url
             source_report[url] = source_report.get(url, []) + [source_url]
