@@ -33,6 +33,24 @@ class TestHistoricalresults(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200)
 
+    def test_limit(self):
+        r = self.app.get(
+            '/results/historical',
+            query_string=dict(
+                owner_id=self.owner_id,
+                url='eightportions.com',
+                offset=0,
+                limit=BATCH_SIZE,
+                filter_exceptions=False
+            ),
+            headers = self.headers
+        )
+        self.assertEqual(r.status_code, 200)
+        response = json.loads(r.get_data(as_text=True))
+        print(response)
+        results = response['results']
+        self.assertEqual(len(results), BATCH_SIZE)
+
     def test_missing_sources(self):
         for offset in range(0, N_RESULTS, BATCH_SIZE):
             r = self.app.get(
