@@ -37,6 +37,7 @@ def test_internal_link():
     assert is_internal_link('/', 'asdfa')
     assert is_internal_link('https://eightportions.com', 'https://eightportions.com')
     assert not is_internal_link('https://eightportions.com', 'https://eightporasdf.com')
+    assert is_internal_link('mailto:?body=', 'https://eightportions.com')
 
 
 def test_internal_link_flat_file():
@@ -60,16 +61,32 @@ def test_prepend_if_relative_javascript_void0():
     assert prepend_if_relative('javascript:void(0)', 'http://anysite.com') == 'javascript:void(0)'
 
 
+def test_prepend_if_relative_mailto_void0():
+    assert prepend_if_relative('mailto:?body=', 'http://anysite.com') == 'mailto:?body='
+
+
 def test_is_internal_link_javascript_void0():
     assert is_internal_link('javascript:void(0)', 'http://anysite.com')
+
+
+def test_is_internal_link_mailto_void0():
+    assert is_internal_link('mailto:?body=', 'http://anysite.com')
 
 
 def test_ensure_protocol_javascript_void0():
     assert ensure_protocol('javascript:void(0)', 'http') == 'javascript:void(0)'
 
 
+def test_ensure_protocol_mailto_void0():
+    assert ensure_protocol('mailto:?body=', 'http') == 'mailto:?body='
+
+
 def test_standardize_url_javascript_void0():
     assert standardize_url('javascript:void(0)') == 'javascript:void(0)'
+
+
+def test_standardize_url_mailto_void0():
+    assert standardize_url('mailto:?body=') == 'mailto:?body='
 
 
 def test_is_internal_link_double_slash():
