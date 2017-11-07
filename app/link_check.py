@@ -25,7 +25,8 @@ def get_all_links(url):
     html = response.content
     soup = BeautifulSoup(html, 'lxml')
     return [
-        a['href'] for a in soup.find_all('a')
+        bytes(a['href'], "utf-8").decode("unicode_escape")
+        for a in soup.find_all('a')
         if a.has_attr('href')]
 
 
@@ -96,6 +97,7 @@ def group_links_internal_external(links, url):
     internal_links = []
     external_links = []
     for link in links:
+        link = link.replace('"', '').replace("'", '')
         if is_internal_link(standardize_url(link), url):
             internal_links.append(prepend_if_relative(standardize_url(link), url))
         else:

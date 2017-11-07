@@ -1,3 +1,4 @@
+from os import path
 from app.link_check import *
 from app.models import Owner
 from unittest.mock import patch
@@ -94,3 +95,23 @@ class TestLinkCheck(object):
     def test_long_response_djaverages(self):
         r = self.test_checker.check_link('http://www.djaverages.com/?go=industrial-calculation')
         assert r.response == 200
+
+    @patch('app.link_check.requests.get')
+    def test_flat_follow(self, mock_get):
+        with open(path.join('samples', 'stokes.html'), 'r') as f:
+            sample_html = f.read()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = sample_html
+        test_checker = LinkChecker(
+            'http://www.stokes4senate.com/forms/shares/new',
+            self.owner.user,
+            self.owner)
+        test_checker.check_all_links_and_follow()
+        results = test_checker.get_results(lambda x: True).all()
+        links_checked = [result.url for result in results]
+        assert set(links_checked) == set([
+            'http://www.stokes4senate.com/login',
+            'mailto:?body=',
+            'http://www.facebook.com/share.php?u=',
+            'http://www.stokes4senate.com/forms/shares/new',
+        ])
