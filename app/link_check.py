@@ -79,11 +79,11 @@ def ensure_protocol(url, protocol='http'):
     return protocol + '://' + url
 
 
-def prepend_if_relative(link, url, keep_anchors=False):
-    """Standardize `link` by prepending it with the hostname if relative"""
-    if link.startswith('javascript:') or link.startswith('mailto:'):
-        return link
-    url_joined = urljoin(url, link)
+def prepend_if_relative(url, url_base, keep_anchors=False):
+    """Standardize `url` by prepending it with the hostname if relative"""
+    if url.startswith('javascript:') or url.startswith('mailto:'):
+        return url
+    url_joined = urljoin(url_base, url)
     if not keep_anchors:
         u = urlparse(url_joined)
         return '{}://{}{}'.format(u.scheme, u.netloc, u.path)
