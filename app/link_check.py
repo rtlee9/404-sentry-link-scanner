@@ -251,7 +251,7 @@ class LinkChecker(object):
         for internal_link in internal_links:
             self.check_all_links_and_follow(internal_link)
 
-    def get_errors(self, matcher):
+    def get_results(self, matcher):
         """Return a formatted JSON document describing any errors
         matching function `matcher`"""
         return LinkCheck.query.\
@@ -262,7 +262,7 @@ class LinkChecker(object):
         """Print any errors matching function `matcher`"""
 
         # get list of errors
-        errors = self.get_errors(matcher)
+        errors = self.get_results(matcher)
 
         # get sources
         error_sources = Link.query.\
