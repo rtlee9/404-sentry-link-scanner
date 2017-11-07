@@ -60,7 +60,7 @@ def is_internal_link(link, reference_url):
     """Return true IFF `link` is a sub-component of `reference_url`"""
     if link.startswith('//'):
         return False
-    if link.startswith('/') or link.startswith('#') or link.startswith('../'):
+    if link.startswith('/') or link.startswith('#') or link.startswith('.'):
         return True
     if get_base_url(link).startswith(get_base_url(reference_url)):
         return True
@@ -83,7 +83,8 @@ def prepend_if_relative(url, url_base, keep_anchors=False):
     """Standardize `url` by prepending it with the hostname if relative"""
     if url.startswith('javascript:') or url.startswith('mailto:'):
         return url
-    url_joined = urljoin(url_base, url)
+    url_joined = urljoin(standardize_url(url_base, True), url)
+    print(url_base, url, url_joined)
     if not keep_anchors:
         u = urlparse(url_joined)
         return '{}://{}{}'.format(u.scheme, u.netloc, u.path)
@@ -129,7 +130,7 @@ def remove_trailing_slash(url):
     return url
 
 
-def standardize_url(url):
+def standardize_url(url, keep_scheme=False):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
     """
@@ -151,7 +152,7 @@ def standardize_url(url):
 
     # external links
     u = urlparse(ensure_protocol(url))
-    scheme = u.scheme.replace('https', 'http')
+    scheme = u.scheme.replace('https', 'http') if not keep_scheme else u.scheme
     url = '{}://{}{}'.format(scheme, u.netloc, u.path).strip()
     return remove_trailing_slash(url)
 

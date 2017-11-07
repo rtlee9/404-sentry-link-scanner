@@ -53,12 +53,21 @@ def test_internal_link_relative():
     assert is_internal_link('../open-source/bletchley/', 'http://tech.labs.oliverwyman.com/blog/2017/09/06/gasconade-making-blog-posts-for-twitter-users/')
 
 
+def test_internal_link_dot_slash():
+    assert is_internal_link('./', 'https://www.grubhub.com/thecrave/')
+
+
 def test_standardize_url_slash_anchor():
     assert standardize_url('http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server/#respond') == 'http://tech.labs.oliverwyman.com/blog/2017/06/19/android-widget-for-dragon-go-server'
 
 
 def test_prepend_if_relative_javascript_void0():
     assert prepend_if_relative('javascript:void(0)', 'http://anysite.com') == 'javascript:void(0)'
+
+
+def test_prepend_if_relative_dot_slash():
+    assert prepend_if_relative('./', 'https://www.grubhub.com/thecrave/') == 'https://www.grubhub.com/'
+    assert prepend_if_relative('./', 'https://www.grubhub.com/thecrave') == 'https://www.grubhub.com/'
 
 
 def test_prepend_if_relative_mailto_void0():
@@ -83,6 +92,10 @@ def test_ensure_protocol_mailto_void0():
 
 def test_standardize_url_javascript_void0():
     assert standardize_url('javascript:void(0)') == 'javascript:void(0)'
+
+
+def test_standardize_url_dot_slash():
+    assert standardize_url('./') == '.'
 
 
 def test_standardize_url_mailto_void0():
