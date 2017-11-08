@@ -9,7 +9,7 @@ BATCH_SIZE = 50
 N_RESULTS = 2000
 
 
-class TestHistoricalresults(unittest.TestCase):
+class TestHistoricalResults(unittest.TestCase):
 
     def setUp(self):
         self.app = app.test_client()
@@ -32,6 +32,38 @@ class TestHistoricalresults(unittest.TestCase):
             headers = self.headers
         )
         self.assertEqual(r.status_code, 200)
+
+    def test_bad_owner_id(self):
+        r = self.app.get(
+            '/results/historical',
+            query_string=dict(
+                owner_id='bad_owner_id',
+                url='eightportions.com',
+                offset=0,
+                limit=BATCH_SIZE,
+                filter_exceptions=False
+            ),
+            headers = self.headers
+        )
+        self.assertEqual(r.status_code, 404)
+        response_json = json.loads(r.get_data())
+        self.assertIn('message', response_json)
+        self.assertEqual(response_json['message'], 'Job not found')
+
+    def test_unauthorized(self):
+        bad_headers = {'Authorization': 'Basic ' + 'bad_auth'}
+        r = self.app.get(
+            '/results/historical',
+            query_string=dict(
+                owner_id=self.owner_id,
+                url='eightportions.com',
+                offset=0,
+                limit=BATCH_SIZE,
+                filter_exceptions=False
+            ),
+            headers = bad_headers
+        )
+        self.assertEqual(r.status_code, 401)
 
     def test_limit(self):
         r = self.app.get(
