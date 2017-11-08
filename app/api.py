@@ -238,6 +238,10 @@ class HistoricalJobs(Resource):
             filter(ScanJob.owner == owner)
         if args.url:
             jobs = jobs.filter(ScanJob.root_url == standardize_descheme_url(args.url))
+        if jobs.count() == 0:
+            response = jsonify(message='Job not found')
+            response.status_code = 404
+            return response
         return jsonify([
             job.to_json() for job in
             jobs.order_by(ScanJob.start_time.desc()).all()])
