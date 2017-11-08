@@ -130,6 +130,17 @@ class Resource(Resource):
     method_decorators = [auth.login_required]
 
 
+def get_owner(owner_id):
+    """ Get Owner record from `owner_id`.
+    Sets `owner_id` to API username if owner is not an admin or now `owner_id` provided.
+    """
+    if (not owner_id) or (not g.user.admin):
+        owner_id = g.user.username
+    else:
+        owner_id = owner_id
+    return Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+
+
 class HistoricalResults(Resource):
     def get(self):
         """Return the results of a historical job for a given user.
@@ -142,16 +153,13 @@ class HistoricalResults(Resource):
         parser.add_argument('offset', type=int, default=0, help='First record to fetch')
         parser.add_argument('filter_exceptions', type=inputs.boolean, default=True, help='First exceptions only')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         last_job_id = db.session.query(db.func.max(ScanJob.id)).\
             filter(ScanJob.user == g.user).\
             filter(ScanJob.owner == owner)
         if args.url:
             last_job_id = last_job_id.filter(ScanJob.root_url == standardize_descheme_url(args.url))
+        owner = get_owner(args.owner_id)
+
         try:
             last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
         except IndexError:
@@ -228,11 +236,8 @@ class HistoricalJobs(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        owner = get_owner(args.owner_id)
+
         jobs = ScanJob.query.\
             filter(ScanJob.user == g.user).\
             filter(ScanJob.owner == owner)
@@ -254,11 +259,8 @@ class LinkScan(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        owner = get_owner(args.owner_id)
+
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
             filter(PermissionedURL.root_url == standardize_descheme_url(args.url)).\
@@ -279,11 +281,8 @@ class LinkScanJob(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        owner = get_owner(args.owner_id)
+
         cron_params = request.get_json()
         # confirm url is permissioned for owner-user
         permissioned = PermissionedURL.query.\
@@ -311,11 +310,8 @@ class LinkScanJob(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        owner = get_owner(args.owner_id)
+
         jobs = ScheduledJob.query.\
             filter(ScheduledJob.user == g.user).\
             filter(ScheduledJob.owner == owner)
@@ -341,11 +337,8 @@ class LinkScanJob(Resource):
         parser.add_argument('url', type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        owner = get_owner(args.owner_id)
+
         jobs = ScheduledJob.query.\
             filter(ScheduledJob.user == g.user).\
             filter(ScheduledJob.owner == owner)
@@ -371,10 +364,8 @@ class UrlPermissions(Resource):
         parser.add_argument(
             'stripe_subscription_id', type=str, help='Stripe subscription ID')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -413,10 +404,8 @@ class UrlPermissions(Resource):
         parser.add_argument(
             'stripe_subscription_id', required=True, type=str, help='Stripe subscription ID')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -434,10 +423,8 @@ class UrlPermissions(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -463,10 +450,8 @@ class UrlPermissions(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -488,10 +473,8 @@ class Owners(Resource):
         parser.add_argument('stripe_customer_id', type=str, help='Stripe customer ID')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -525,10 +508,8 @@ class Owners(Resource):
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         parser.add_argument('id', required=True, type=int, help='API owner ID')
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
@@ -553,10 +534,8 @@ class Owners(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('owner_id', required=True, type=str)
         args = parser.parse_args()
-        if (not args.owner_id) or (not g.user.admin):
-            owner_id = g.user.username
-        else:
-            owner_id = args.owner_id
+        owner = get_owner(args.owner_id)
+
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
             response.status_code = 403
