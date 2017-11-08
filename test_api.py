@@ -79,7 +79,6 @@ class TestHistoricalResults(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 200)
         response = json.loads(r.get_data(as_text=True))
-        print(response)
         results = response['results']
         self.assertEqual(len(results), BATCH_SIZE)
 
@@ -136,7 +135,6 @@ class TestHistoricalJobs(unittest.TestCase):
         )
         self.assertEqual(r.status_code, 404)
         response_json = json.loads(r.get_data())
-        print(response_json)
         self.assertIn('message', response_json)
         self.assertEqual(response_json['message'], 'Job not found')
 
