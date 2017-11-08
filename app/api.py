@@ -141,6 +141,17 @@ def get_owner(owner_id):
     return Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
 
 
+def get_last_job(owner, url):
+    """ Get most recent ScanJob record for the corresponding filters
+    """
+    last_job_id = db.session.query(db.func.max(ScanJob.id)).\
+        filter(ScanJob.user == g.user).\
+        filter(ScanJob.owner == owner)
+    if url:
+        last_job_id = last_job_id.filter(ScanJob.root_url == standardize_descheme_url(url))
+    return ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
+
+
 class HistoricalResults(Resource):
     def get(self):
         """Return the results of a historical job for a given user.
@@ -153,15 +164,10 @@ class HistoricalResults(Resource):
         parser.add_argument('offset', type=int, default=0, help='First record to fetch')
         parser.add_argument('filter_exceptions', type=inputs.boolean, default=True, help='First exceptions only')
         args = parser.parse_args()
-        last_job_id = db.session.query(db.func.max(ScanJob.id)).\
-            filter(ScanJob.user == g.user).\
-            filter(ScanJob.owner == owner)
-        if args.url:
-            last_job_id = last_job_id.filter(ScanJob.root_url == standardize_descheme_url(args.url))
         owner = get_owner(args.owner_id)
 
         try:
-            last_job = ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
+            last_job = get_last_job(owner, args.url)
         except IndexError:
             response = jsonify(message='Job not found')
             response.status_code = 404
