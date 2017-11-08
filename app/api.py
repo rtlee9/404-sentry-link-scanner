@@ -130,14 +130,19 @@ class Resource(Resource):
     method_decorators = [auth.login_required]
 
 
+def get_owner_id(owner_id):
+    """ Sets `owner_id` to API username if owner is not an admin or now `owner_id` provided.
+    """
+    if (not owner_id) or (not g.user.admin):
+        return g.user.username
+    else:
+        return owner_id
+
 def get_owner(owner_id):
     """ Get Owner record from `owner_id`.
     Sets `owner_id` to API username if owner is not an admin or now `owner_id` provided.
     """
-    if (not owner_id) or (not g.user.admin):
-        owner_id = g.user.username
-    else:
-        owner_id = owner_id
+    owner_id = get_owner_id(owner_id)
     return Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
 
 
@@ -370,7 +375,7 @@ class UrlPermissions(Resource):
         parser.add_argument(
             'stripe_subscription_id', type=str, help='Stripe subscription ID')
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
@@ -410,7 +415,7 @@ class UrlPermissions(Resource):
         parser.add_argument(
             'stripe_subscription_id', required=True, type=str, help='Stripe subscription ID')
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
@@ -429,7 +434,7 @@ class UrlPermissions(Resource):
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
@@ -456,7 +461,7 @@ class UrlPermissions(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
@@ -479,7 +484,7 @@ class Owners(Resource):
         parser.add_argument('stripe_customer_id', type=str, help='Stripe customer ID')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
@@ -514,7 +519,7 @@ class Owners(Resource):
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         parser.add_argument('id', required=True, type=int, help='API owner ID')
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
@@ -540,7 +545,7 @@ class Owners(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('owner_id', required=True, type=str)
         args = parser.parse_args()
-        owner = get_owner(args.owner_id)
+        owner_id = get_owner_id(args.owner_id)
 
         if not g.user.admin:
             response = jsonify(message='This method requires admin rights.')
