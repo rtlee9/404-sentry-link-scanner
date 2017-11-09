@@ -106,6 +106,17 @@ def test_is_internal_link_double_slash():
     assert not is_internal_link('//www.pinterest.com/pin/create/button/', 'http://nonnompaleo.com')
 
 
+def test_is_internal_link_no_dot_slash():
+    assert is_internal_link('panorama-exposed.html', 'http://www.freedommag.org/special-reports/bbc/panorama-desperate-lies.html')
+
+
+def test_prepend_if_relative_no_dot_slash():
+    assert prepend_if_relative(
+        'panorama-exposed.html',
+        'http://www.freedommag.org/special-reports/bbc/panorama-desperate-lies.html'
+    ) == 'http://www.freedommag.org/special-reports/bbc/panorama-exposed.html'
+
+
 def test_standardize_double_slash():
     assert standardize_url('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button'
 

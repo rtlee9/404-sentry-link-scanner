@@ -64,7 +64,7 @@ def is_internal_link(link, reference_url):
         return True
     if get_base_url(link).startswith(get_base_url(reference_url)):
         return True
-    if '.' not in link:
+    if '.' not in link.replace('.html', ''):
         return True
     return False
 
@@ -84,7 +84,6 @@ def prepend_if_relative(url, url_base, keep_anchors=False):
     if url.startswith('javascript:') or url.startswith('mailto:'):
         return url
     url_joined = urljoin(standardize_url(url_base, True), url)
-    print(url_base, url, url_joined)
     if not keep_anchors:
         u = urlparse(url_joined)
         return '{}://{}{}'.format(u.scheme, u.netloc, u.path)
