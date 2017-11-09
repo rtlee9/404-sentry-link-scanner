@@ -468,6 +468,10 @@ class UrlPermissions(Resource):
             response.status_code = 403
             return response
         owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        if not owner:
+            response = jsonify(message='Owner not found')
+            response.status_code = 404
+            return response
         permissioned_urls = PermissionedURL.query.\
             filter(PermissionedURL.owner == owner).\
             filter(PermissionedURL.user == g.user)
