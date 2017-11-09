@@ -157,6 +157,17 @@ def get_last_job(owner, url):
     return ScanJob.query.filter(ScanJob.id == last_job_id.scalar()).all()[-1]
 
 
+def admin_required(f):
+    """ Decorator to confirm the current API user is an admin; returns a 403 otherwise.
+    """
+    def wrapper(*args, **kwargs):
+        if not g.user.admin:
+            response = jsonify(message='This method requires admin rights.')
+            response.status_code = 403
+            return response
+        return f(*args, **kwargs)
+    return wrapper
+
 class HistoricalResults(Resource):
     def get(self):
         """Return the results of a historical job for a given user.
@@ -367,6 +378,8 @@ class LinkScanJob(Resource):
 
 
 class UrlPermissions(Resource):
+
+    @admin_required
     def post(self):
         """Add permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
@@ -375,13 +388,8 @@ class UrlPermissions(Resource):
         parser.add_argument(
             'stripe_subscription_id', type=str, help='Stripe subscription ID')
         args = parser.parse_args()
-        owner_id = get_owner_id(args.owner_id)
+        owner = get_owner(args.owner_id)
 
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         try:
             permissioned_url = PermissionedURL(
                 root_url=standardize_descheme_url(args.url),
@@ -405,6 +413,7 @@ class UrlPermissions(Resource):
             response.status_code = 403
             return response
 
+    @admin_required
     def patch(self):
         """Update permissioned URL for a given user
         with provided URL paramters by job ID(requires admin rights)"""
@@ -415,32 +424,22 @@ class UrlPermissions(Resource):
         parser.add_argument(
             'stripe_subscription_id', required=True, type=str, help='Stripe subscription ID')
         args = parser.parse_args()
-        owner_id = get_owner_id(args.owner_id)
-
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
+        owner = get_owner(args.owner_id)
 
         permissioned_url = PermissionedURL.query.filter(PermissionedURL.id == args.id).first()
         permissioned_url.stripe_subscription_id = args.stripe_subscription_id
         db.session.commit()
         return jsonify(permissioned_url.to_json())
 
+    @admin_required
     def delete(self):
         """Delete permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
         parser.add_argument('url', required=True, type=str, help='URL to check')
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner_id = get_owner_id(args.owner_id)
+        owner = get_owner(args.owner_id)
 
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         depermissioned_urls = PermissionedURL.query.\
             filter(PermissionedURL.root_url == standardize_descheme_url(args.url)).\
             filter(PermissionedURL.user == g.user).\
@@ -456,18 +455,14 @@ class UrlPermissions(Resource):
         db.session.commit()
         return jsonify(depermissioned_url_details)
 
+    @admin_required
     def get(self):
         """Add permissioned URL for a given user (requires admin rights)"""
         parser = reqparse.RequestParser()
         parser.add_argument('owner_id', type=str, help='Scan job owner')
         args = parser.parse_args()
-        owner_id = get_owner_id(args.owner_id)
+        owner = get_owner(args.owner_id)
 
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
-        owner = Owner.query.filter(Owner.user == g.user).filter(Owner.email == owner_id).first()
         if not owner:
             response = jsonify(message='Owner not found')
             response.status_code = 404
@@ -480,6 +475,8 @@ class UrlPermissions(Resource):
             for permissioned_url in permissioned_urls])
 
 class Owners(Resource):
+
+    @admin_required
     def post(self):
         """Add owner resource (requires admin rights)"""
         parser = reqparse.RequestParser()
@@ -490,10 +487,6 @@ class Owners(Resource):
         args = parser.parse_args()
         owner_id = get_owner_id(args.owner_id)
 
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
         try:
             owner = Owner(
                 email=owner_id,
@@ -514,6 +507,7 @@ class Owners(Resource):
             response.status_code = 403
             return response
 
+    @admin_required
     def patch(self):
         """Patch owner by owner ID (requires admin rights)"""
         parser = reqparse.RequestParser()
@@ -525,10 +519,6 @@ class Owners(Resource):
         args = parser.parse_args()
         owner_id = get_owner_id(args.owner_id)
 
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
         try:
             owner = Owner.query.filter(Owner.id == args.id).first()
             owner.email=owner_id
@@ -544,6 +534,7 @@ class Owners(Resource):
             response.status_code = 404
             return response
 
+    @admin_required
     def get(self):
         """Get owner resource (requires admin rights)"""
         parser = reqparse.RequestParser()
@@ -551,10 +542,6 @@ class Owners(Resource):
         args = parser.parse_args()
         owner_id = get_owner_id(args.owner_id)
 
-        if not g.user.admin:
-            response = jsonify(message='This method requires admin rights.')
-            response.status_code = 403
-            return response
         try:
             owner = Owner.query.\
                 filter(Owner.email == owner_id).\
