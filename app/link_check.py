@@ -4,7 +4,7 @@ import requests
 from requests.compat import urljoin, urlparse
 from bs4 import BeautifulSoup
 import datetime
-from .globals import GET_TIMEOUT
+from .globals import GET_TIMEOUT, PAGE_LIMIT
 from . import app, db, scheduler
 from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
@@ -245,6 +245,12 @@ class LinkChecker(object):
         """Recursively check all links in all sub-pages of `url`"""
         if url is None:
             url = self.url
+
+        # break if page limit exceeded
+        if len(self.links_checked_and_followed) > PAGE_LIMIT:
+            print('Page limit {:,} exceeded for {}'.format(PAGE_LIMIT, url))
+            return
+
         url_standardized = standardize_url(url)
         if url_standardized in self.links_checked_and_followed:
             return
