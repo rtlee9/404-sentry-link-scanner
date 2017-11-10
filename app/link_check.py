@@ -285,6 +285,4 @@ class LinkChecker(object):
             url = error_source.url
             error_report[url] = error_report.get(url, []) + [source_url]
 
-        # print and return
-        print(error_report)
         return error_report
