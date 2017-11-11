@@ -97,7 +97,7 @@ class TestLinkCheck(object):
         assert r.response == 200
 
     @patch('app.link_check.requests.get')
-    def test_flat_follow(self, mock_get):
+    def test_stokes(self, mock_get):
         with open(path.join('samples', 'stokes.html'), 'r') as f:
             sample_html = f.read()
         mock_get.return_value.status_code = 200
