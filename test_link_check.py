@@ -92,10 +92,6 @@ class TestLinkCheck(object):
         r = self.test_checker.check_link('http://www.siafoo.net/article/52')
         assert r.response == 200
 
-    def test_long_response_djaverages(self):
-        r = self.test_checker.check_link('http://www.djaverages.com/?go=industrial-calculation')
-        assert r.response == 200
-
     @patch('app.link_check.requests.get')
     def test_stokes(self, mock_get):
         with open(path.join('samples', 'stokes.html'), 'r') as f:
