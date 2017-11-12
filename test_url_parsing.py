@@ -78,6 +78,14 @@ def test_prepend_dot_slash_ext():
     assert prepend_if_relative('./rpt_fac_list.cfm', 'https://www.va.gov/directory/guide/home.asp') == 'https://www.va.gov/directory/guide/rpt_fac_list.cfm'
 
 
+def test_is_internal_link_dot_xml():
+    assert is_internal_link('Major_Communications.xml', 'https://www.va.gov/recovery/')
+
+
+def test_prepend_dot_xml():
+    assert prepend_if_relative('Major_Communications.xml', 'https://www.va.gov/recovery/') == 'https://www.va.gov/recovery/Major_Communications.xml'
+
+
 def test_is_internal_link_dot_slash_ext():
     assert is_internal_link('state_PTSD.cfm?STATE=AS', 'https://www.va.gov/directory/guide/PTSD.asp')
 

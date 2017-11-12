@@ -10,7 +10,7 @@ from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
-web_extensions = ('html', 'htm', 'aspx', 'php', 'asp', 'cfm')
+web_extensions = ('html', 'htm', 'aspx', 'php', 'asp', 'cfm', 'xml')
 
 
 def get_all_links(url):

@@ -163,3 +163,18 @@ class TestLinkCheck(object):
         links_checked = [result.url for result in results]
         assert 'http://state_PTSD.cfm?STATE=VI' not in links_checked
         assert 'http://www.va.gov/directory/guide/state_PTSD.cfm' in links_checked
+
+    @patch('app.link_check.requests.get')
+    def test_relative_dot_xml(self, mock_get):
+        with open(path.join('samples', 'va_recovery.html'), 'r') as f:
+            sample_html = f.read()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = sample_html
+        test_checker = LinkChecker(
+            'https://www.va.gov/directory/guide/PTSD.asp',
+            self.owner.user,
+            self.owner)
+        test_checker.check_all_links_and_follow()
+        results = test_checker.get_results(lambda x: True).all()
+        links_checked = [result.url for result in results]
+        assert 'http://Major_Communications.xml' not in links_checked
