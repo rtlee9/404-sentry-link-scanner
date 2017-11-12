@@ -40,6 +40,10 @@ def test_internal_link():
     assert is_internal_link('mailto:?body=', 'https://eightportions.com')
 
 
+def test_internal_link():
+    assert is_internal_link('./rpt_fac_list.cfm', 'https://www.va.gov/directory/guide/home.asp')
+
+
 def test_internal_link_flat_file():
     assert is_internal_link('/resume.pdf', 'https://eightportions.com')
     assert is_internal_link('/files/resume.pdf', 'https://eightportions.com')
@@ -68,6 +72,10 @@ def test_prepend_if_relative_javascript_void0():
 def test_prepend_if_relative_dot_slash():
     assert prepend_if_relative('./', 'https://www.grubhub.com/thecrave/') == 'https://www.grubhub.com/thecrave/'
     assert prepend_if_relative('./', 'https://www.grubhub.com/thecrave') == 'https://www.grubhub.com/'
+
+
+def test_prepend_dot_slash_ext():
+    assert prepend_if_relative('./rpt_fac_list.cfm', 'https://www.va.gov/directory/guide/home.asp') == 'https://www.va.gov/directory/guide/rpt_fac_list.cfm'
 
 
 def test_prepend_if_relative_mailto_void0():

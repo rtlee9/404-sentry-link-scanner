@@ -109,7 +109,7 @@ def group_links_internal_external(links, url):
     external_links = []
     for link in links:
         link = link.replace('"', '').replace("'", '')
-        if is_internal_link(standardize_url(link), url):
+        if is_internal_link(link, url):
             internal_links.append(standardize_url(prepend_if_relative(link, url)))
         else:
             external_links.append(ensure_protocol(link.strip()))
