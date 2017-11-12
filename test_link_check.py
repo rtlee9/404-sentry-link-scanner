@@ -117,7 +117,7 @@ class TestLinkCheck(object):
         ])
 
     @patch('app.link_check.requests.get')
-    def test_stokes(self, mock_get):
+    def test_dot_asp_va(self, mock_get):
         with open(path.join('samples', 'va.html'), 'r') as f:
             sample_html = f.read()
         mock_get.return_value.status_code = 200

@@ -134,12 +134,6 @@ def is_flat_file(url):
     return True
 
 
-def remove_trailing_slash(url):
-    if url.endswith('/') and len(url) > 1:
-        return url[:-1]
-    return url
-
-
 def standardize_url(url, keep_scheme=False):
     """Standardize `url` string formatting by removing anchors and trailing slashes,
     and by prepending schemas
@@ -158,13 +152,12 @@ def standardize_url(url, keep_scheme=False):
     # internal links
     u_dummy = urlparse(urljoin('http://dummy.com/dummy_path', url))
     if u_dummy.netloc == 'dummy.com':
-        return remove_trailing_slash(url)
+        return url
 
     # external links
     u = urlparse(ensure_protocol(url))
     scheme = u.scheme.replace('https', 'http') if not keep_scheme else u.scheme
-    url = '{}://{}{}'.format(scheme, u.netloc, u.path).strip()
-    return remove_trailing_slash(url)
+    return '{}://{}{}'.format(scheme, u.netloc, u.path).strip()
 
 def standardize_descheme_url(url):
     url_standardized = standardize_url(url)
