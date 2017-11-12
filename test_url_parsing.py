@@ -78,6 +78,14 @@ def test_prepend_dot_slash_ext():
     assert prepend_if_relative('./rpt_fac_list.cfm', 'https://www.va.gov/directory/guide/home.asp') == 'https://www.va.gov/directory/guide/rpt_fac_list.cfm'
 
 
+def test_is_internal_link_dot_slash_ext():
+    assert is_internal_link('state_PTSD.cfm?STATE=AS', 'https://www.va.gov/directory/guide/PTSD.asp')
+
+
+def test_prepend_dot_slash_ext():
+    assert prepend_if_relative('state_PTSD.cfm?STATE=AS', 'https://www.va.gov/directory/guide/PTSD.asp', keep_anchors=True) == 'https://www.va.gov/directory/guide/state_PTSD.cfm?STATE=AS'
+
+
 def test_prepend_if_relative_mailto_void0():
     assert prepend_if_relative('mailto:?body=', 'http://anysite.com') == 'mailto:?body='
 
