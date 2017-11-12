@@ -109,6 +109,9 @@ def test_is_internal_link_double_slash():
 def test_is_internal_link_no_dot_slash():
     assert is_internal_link('panorama-exposed.html', 'http://www.freedommag.org/special-reports/bbc/panorama-desperate-lies.html')
 
+def test_is_internal_link_dot_asp_slash():
+    assert is_internal_link('copays.asp', 'https://www.va.gov/HEALTHBENEFITS/cost/')
+
 
 def test_prepend_if_relative_no_dot_slash():
     assert prepend_if_relative(
@@ -238,5 +241,17 @@ def test_ensure_protocol_double_slash():
     assert ensure_protocol('//www.pinterest.com/pin/create/button/') == 'http://www.pinterest.com/pin/create/button/'
 
 
+def test_is_flat_file_asp():
+    assert not is_flat_file('copays.asp')
+
+
 def test_standardize_url_ftp():
     assert standardize_url('ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html') == 'ftp://cran.r-project.org/pub/R/web/packages/data.table/vignettes/datatable-reshape.html'
+
+
+def test_remove_web_extensions():
+    assert remove_web_extensions('https://test.html') == 'https://test'
+    assert remove_web_extensions('https://test.htm') == 'https://test'
+    assert remove_web_extensions('https://test.asp') == 'https://test'
+    assert remove_web_extensions('https://test.aspx') == 'https://test'
+    assert remove_web_extensions('https://test.com') == 'https://test.com'

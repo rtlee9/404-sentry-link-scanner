@@ -115,3 +115,19 @@ class TestLinkCheck(object):
             'http://www.facebook.com/share.php?u=',
             'http://www.stokes4senate.com/forms/shares/new',
         ])
+
+    @patch('app.link_check.requests.get')
+    def test_stokes(self, mock_get):
+        with open(path.join('samples', 'va.html'), 'r') as f:
+            sample_html = f.read()
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = sample_html
+        test_checker = LinkChecker(
+            'https://www.va.gov/HEALTHBENEFITS/cost/',
+            self.owner.user,
+            self.owner)
+        test_checker.check_all_links_and_follow()
+        results = test_checker.get_results(lambda x: True).all()
+        links_checked = [result.url for result in results]
+        asp_links = [link for link in links_checked if 'copays.asp' in link]
+        assert 'http://copays.asp' not in asp_links

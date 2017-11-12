@@ -10,6 +10,7 @@ from .models import Link, LinkCheck, ScanJob, ScheduledJob
 
 
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+web_extensions = ('html', 'htm', 'aspx', 'php', 'asp')
 
 
 def get_all_links(url):
@@ -56,6 +57,15 @@ def points_to_self(link, url_self):
     return False
 
 
+def remove_web_extensions(link):
+    """ Remove web extensions (e.g., html, asp) from link URL
+    """
+    link_no_web_extensions = link
+    for extension in web_extensions:
+        link_no_web_extensions = link_no_web_extensions.replace('.' + extension, '')
+    return link_no_web_extensions
+
+
 def is_internal_link(link, reference_url):
     """Return true IFF `link` is a sub-component of `reference_url`"""
     if link.startswith('//'):
@@ -64,7 +74,8 @@ def is_internal_link(link, reference_url):
         return True
     if get_base_url(link).startswith(get_base_url(reference_url)):
         return True
-    if '.' not in link.replace('.html', ''):
+    link_no_web_extensions = remove_web_extensions(link)
+    if '.' not in link_no_web_extensions:
         return True
     return False
 
@@ -99,7 +110,7 @@ def group_links_internal_external(links, url):
     for link in links:
         link = link.replace('"', '').replace("'", '')
         if is_internal_link(standardize_url(link), url):
-            internal_links.append(prepend_if_relative(standardize_url(link), url))
+            internal_links.append(standardize_url(prepend_if_relative(link, url)))
         else:
             external_links.append(ensure_protocol(link.strip()))
     return internal_links, external_links
@@ -117,7 +128,7 @@ def is_flat_file(url):
         return False
 
     file_type = u.path.split('.')[-1]
-    if file_type in ('html', 'htm', 'aspx', 'php'):
+    if file_type in web_extensions:
         return False
 
     return True
