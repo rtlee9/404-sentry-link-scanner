@@ -102,6 +102,23 @@ class TestHistoricalResults(unittest.TestCase):
             for result in results:
                 self.assertIn(result['url'], sources)
 
+    def test_response_keys(self):
+        r = self.app.get(
+            '/results/historical',
+            query_string=dict(
+                owner_id=self.owner_id,
+                url='eightportions.com',
+                offset=0,
+                limit=BATCH_SIZE,
+                filter_exceptions=False
+            ),
+            headers = self.headers
+        )
+        self.assertEqual(r.status_code, 200)
+        response_json = json.loads(r.get_data())
+        self.assertTrue(len(response_json) > 0)
+        self.assertListEqual(list(response_json.keys()), ['job', 'results', 'sources'])
+
 
 class TestHistoricalJobs(unittest.TestCase):
 
