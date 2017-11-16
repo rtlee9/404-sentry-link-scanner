@@ -29,7 +29,7 @@ class TestHistoricalResults(unittest.TestCase):
                 limit=BATCH_SIZE,
                 filter_exceptions=False
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 200)
 
@@ -43,7 +43,7 @@ class TestHistoricalResults(unittest.TestCase):
                 limit=BATCH_SIZE,
                 filter_exceptions=False
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 404)
         response_json = json.loads(r.get_data())
@@ -61,7 +61,7 @@ class TestHistoricalResults(unittest.TestCase):
                 limit=BATCH_SIZE,
                 filter_exceptions=False
             ),
-            headers = bad_headers
+            headers=bad_headers
         )
         self.assertEqual(r.status_code, 401)
 
@@ -75,7 +75,7 @@ class TestHistoricalResults(unittest.TestCase):
                 limit=BATCH_SIZE,
                 filter_exceptions=False
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 200)
         response = json.loads(r.get_data(as_text=True))
@@ -93,7 +93,7 @@ class TestHistoricalResults(unittest.TestCase):
                     limit=BATCH_SIZE,
                     filter_exceptions=False
                 ),
-                headers = self.headers
+                headers=self.headers
             )
             self.assertEqual(r.status_code, 200)
             response = json.loads(r.get_data(as_text=True))
@@ -112,7 +112,7 @@ class TestHistoricalResults(unittest.TestCase):
                 limit=BATCH_SIZE,
                 filter_exceptions=False
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 200)
         response_json = json.loads(r.get_data())
@@ -137,7 +137,7 @@ class TestHistoricalJobs(unittest.TestCase):
                 owner_id=self.owner_id,
                 url='eightportions.com',
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 200)
 
@@ -148,7 +148,7 @@ class TestHistoricalJobs(unittest.TestCase):
                 owner_id='bad_owner_id',
                 url='eightportions.com',
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 404)
         response_json = json.loads(r.get_data())
@@ -163,7 +163,7 @@ class TestHistoricalJobs(unittest.TestCase):
                 owner_id=self.owner_id,
                 url='eightportions.com',
             ),
-            headers = bad_headers
+            headers=bad_headers
         )
         self.assertEqual(r.status_code, 401)
 
@@ -185,7 +185,7 @@ class TestPermissions(unittest.TestCase):
                 owner_id=self.owner_id,
                 url='eightportions.com',
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 200)
 
@@ -196,7 +196,7 @@ class TestPermissions(unittest.TestCase):
                 owner_id='bad_owner_id',
                 url='eightportions.com',
             ),
-            headers = self.headers
+            headers=self.headers
         )
         self.assertEqual(r.status_code, 404)
         response_json = json.loads(r.get_data())
@@ -211,7 +211,7 @@ class TestPermissions(unittest.TestCase):
                 owner_id=self.owner_id,
                 url='eightportions.com',
             ),
-            headers = bad_headers
+            headers=bad_headers
         )
         self.assertEqual(r.status_code, 401)
 
@@ -225,7 +225,7 @@ class TestPermissions(unittest.TestCase):
                 owner_id=self.owner_id,
                 url='eightportions.com',
             ),
-            headers = bad_headers
+            headers=bad_headers
         )
         self.assertEqual(r.status_code, 403)
         response_json = json.loads(r.get_data())
