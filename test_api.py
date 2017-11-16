@@ -18,9 +18,7 @@ class TestHistoricalResults(unittest.TestCase):
         auth = b64encode(bytes("{0}:{1}".format(*credentials), 'utf-8')).decode('ascii')
         self.headers = {'Authorization': 'Basic ' + auth}
         self.owner_id = 'google-oauth2|105039217801705600811'
-
-    def test_response_200(self):
-        r = self.app.get(
+        self.r = self.app.get(
             '/results/historical',
             query_string=dict(
                 owner_id=self.owner_id,
@@ -31,7 +29,9 @@ class TestHistoricalResults(unittest.TestCase):
             ),
             headers=self.headers
         )
-        self.assertEqual(r.status_code, 200)
+
+    def test_response_200(self):
+        self.assertEqual(self.r.status_code, 200)
 
     def test_bad_owner_id(self):
         r = self.app.get(
@@ -66,19 +66,7 @@ class TestHistoricalResults(unittest.TestCase):
         self.assertEqual(r.status_code, 401)
 
     def test_limit(self):
-        r = self.app.get(
-            '/results/historical',
-            query_string=dict(
-                owner_id=self.owner_id,
-                url='eightportions.com',
-                offset=0,
-                limit=BATCH_SIZE,
-                filter_exceptions=False
-            ),
-            headers=self.headers
-        )
-        self.assertEqual(r.status_code, 200)
-        response = json.loads(r.get_data(as_text=True))
+        response = json.loads(self.r.get_data(as_text=True))
         results = response['results']
         self.assertEqual(len(results), BATCH_SIZE)
 
@@ -103,19 +91,7 @@ class TestHistoricalResults(unittest.TestCase):
                 self.assertIn(result['url'], sources)
 
     def test_response_keys(self):
-        r = self.app.get(
-            '/results/historical',
-            query_string=dict(
-                owner_id=self.owner_id,
-                url='eightportions.com',
-                offset=0,
-                limit=BATCH_SIZE,
-                filter_exceptions=False
-            ),
-            headers=self.headers
-        )
-        self.assertEqual(r.status_code, 200)
-        response_json = json.loads(r.get_data())
+        response_json = json.loads(self.r.get_data())
         self.assertTrue(len(response_json) > 0)
         self.assertListEqual(list(response_json.keys()), ['job', 'results', 'sources'])
 
