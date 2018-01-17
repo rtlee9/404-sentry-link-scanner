@@ -5,7 +5,7 @@
 
 Use this API to self host your 404 Sentry scanner or sign up for automated, recurring scan jobs on the [404 Sentry web app](https://404sentry.com/) to make sure your content is never out of date!
 
-## Usage
+## Local usage (Python 3.6)
 1. Set environment variables:
 	* `DATABASE_URL`: URL of PostgreSQL server
 	* `CONFIG`: configuration type (ProductionConfig, StagingConfig, DevelopmentConfig, TestingConfig)
@@ -13,6 +13,7 @@ Use this API to self host your 404 Sentry scanner or sign up for automated, recu
 	* `EMAIL_PASSWORD`: email password for sending alerts
 	* `TEST_USER`: username for test authentication
 	* `TEST_PASSWORD`: password for test authentication
+1. Initialize Postgres db (one time): `python create_exception_descriptions.py`
 1. Set up virtualenv: `virtualenv venv && source venv/bin/activate`
 1. Install requirements: `pip install -r requirements.txt`
 1. Run web application: `python run.py` or `gunicorn app:app`
