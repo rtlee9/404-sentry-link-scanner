@@ -13,7 +13,6 @@ Use this API to self host your 404 Sentry scanner or sign up for automated, recu
 	* `EMAIL_PASSWORD`: email password for sending alerts
 	* `TEST_USER`: username for test authentication
 	* `TEST_PASSWORD`: password for test authentication
-	* `STRIPE_API_KEY`: API key for [Stripe](https://stripe.com/) account
 1. Set up virtualenv: `virtualenv venv && source venv/bin/activate`
 1. Install requirements: `pip install -r requirements.txt`
 1. Run web application: `python run.py` or `gunicorn app:app`
